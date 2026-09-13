@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>闲听 XianTuner · 本地离线播放器</title>
+<meta name="description" content="闲听 XianTuner — 单文件本地音乐与播客播放器。文件夹整队、整夜循环、10 段均衡器、主题随系统、中英双语，零网络请求，不上传任何数据。">
+<meta name="theme-color" content="#1B1C1F">
+<link rel="icon" href="data:,">
+<style>
+  :root{ --bg:#1B1C1F; --card:#24262A; --tx:#E6E4E1; --tx2:#A5A29D; --acc:#4A9EFF; --ok:#3FC08A; }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:
+      radial-gradient(90% 55% at 50% 10%, rgba(74,158,255,.18) 0%, rgba(18,20,26,0) 62%),
+      radial-gradient(70% 45% at 78% 84%, rgba(63,192,138,.13) 0%, rgba(18,20,26,0) 60%),
+      linear-gradient(180deg,#171A22 0%,#12141A 55%,#0E1016 100%);
+    color:var(--tx);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    display:flex;align-items:center;justify-content:center;padding:28px 20px;min-height:100%}
+  .box{width:100%;max-width:420px;text-align:center}
+  .icon{width:84px;height:84px;margin:0 auto 18px;border-radius:22px;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(145deg,#2A2E36,#1A1D23);border:1px solid rgba(255,255,255,.07);
+    box-shadow:0 10px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06)}
+  h1{margin:0;font-size:2.05em;font-weight:700;letter-spacing:.14em}
+  .en{margin:6px 0 0;font-size:.72em;letter-spacing:.34em;color:var(--acc);font-weight:600}
+  p.lead{margin:16px 0 22px;color:var(--tx2);font-size:.93em}
+  a.go{display:block;padding:16px 20px;border-radius:14px;text-decoration:none;font-weight:600;font-size:1.03em;
+    color:#0E1116;background:linear-gradient(135deg,#4A9EFF 0%,#3FC08A 100%);
+    box-shadow:0 8px 24px rgba(74,158,255,.28);transition:transform .15s ease,box-shadow .15s ease}
+  a.go:hover{transform:translateY(-1px);box-shadow:0 12px 30px rgba(74,158,255,.36)}
+  .feats{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:20px 0 0}
+  .feats span{font-size:.79em;color:var(--tx2);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:4px 11px}
+  .sig{margin-top:26px;font-size:.76em;color:#6E7178;letter-spacing:.04em}
+  a.link{color:#6E7178;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.14)}
+  @media (prefers-color-scheme: light){
+    :root{ --bg:#F2F3F5; --tx:#1D1F23; --tx2:#6B7078; }
+    body{background:linear-gradient(180deg,#FFFFFF 0%,#F2F3F5 100%);color:#1D1F23}
+    .icon{background:linear-gradient(145deg,#FFFFFF,#EDEFF3);border-color:#DFE2E7;box-shadow:0 8px 24px rgba(20,25,35,.10)}
+    .feats span{border-color:#DFE2E7;color:#6B7078}
+    a.go{color:#fff;box-shadow:0 8px 24px rgba(22,104,196,.24)}
+    .sig,a.link{color:#8A8F98}
+  }
+</style>
+</head>
+<body>
+  <div class="box">
+    <div class="icon">
+      <svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true">
+        <path d="M17 30.5a4.5 4.5 0 1 1-3-4.24V13.6l15-3.1v13.3a4.5 4.5 0 1 1-3-4.24V15.1l-9 1.86z"
+              fill="none" stroke="#4A9EFF" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <h1>闲 听</h1>
+    <p class="en">XIAN TUNER</p>
+    <p class="lead">本机音频，随心整理。文件夹整队播放、均衡器调音、主题随系统而变 —— 不联网、无广告、不上传任何数据。</p>
+    <a class="go" href="./web/XianTuner.html">进入播放器 · Enter</a>
+    <div class="feats">
+      <span>整文件夹入队</span>
+      <span>整夜循环</span>
+      <span>10 段均衡器</span>
+      <span>深浅主题</span>
+      <span>睡眠定时</span>
+      <span>断点续播</span>
+    </div>
+    <p class="sig">© 永远的兰兰 · Lanlan Eternal &nbsp;|&nbsp; <a class="link" href="https://github.com/podcatcher962/XianTuner">GitHub</a></p>
+  </div>
+  <script>setTimeout(function(){ location.replace('./web/XianTuner.html'); }, 1200);</script>
+</body>
+</html>

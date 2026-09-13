@@ -1,0 +1,6 @@
+# internal
+_ui_shot.png
+_smoke_*.png
+_*.log
+node_modules/
+tools/

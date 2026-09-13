@@ -1,0 +1,2913 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1B1C1F" id="metaTheme">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="闲听 XianTuner — 纯本地、离线、无广告的网页音乐播放器。支持文件夹整队播放、均衡器、主题切换、睡眠定时。">
+<title>闲听 XianTuner · 本地离线播放器</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231B1C1F'/%3E%3Ccircle cx='24' cy='40' r='9' fill='none' stroke='%234A9EFF' stroke-width='4'/%3E%3Cpath d='M33 40V18l16-4v22' fill='none' stroke='%233FC08A' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231B1C1F'/%3E%3Ccircle cx='24' cy='40' r='9' fill='none' stroke='%234A9EFF' stroke-width='4'/%3E%3Cpath d='M33 40V18l16-4v22' fill='none' stroke='%233FC08A' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+/* ============ 主题变量：深色（默认） ============ */
+:root{
+  --bg:#1B1C1F; --card:#24262A; --card2:#2C2F34; --line:#3A3D43;
+  --tx:#E6E4E1; --tx2:#A5A29D;
+  --acc:#4A9EFF; --ok:#3FC08A; --warn:#E8A33D; --danger:#E2685F;
+  --accInk:#0E1116;          /* 主色按钮上的文字色 */
+  --shadow:0 6px 24px rgba(0,0,0,.35);
+  --ui:1;                     /* 无障碍缩放系数 */
+  --tap:34px;                 /* 最小触控尺寸 */
+}
+/* ============ 主题变量：浅色 ============ */
+html[data-theme="light"]{
+  --bg:#F2F3F5; --card:#FFFFFF; --card2:#F7F8FA; --line:#DFE2E7;
+  --tx:#1D1F23; --tx2:#6B7078;
+  --acc:#1668C4; --ok:#127A4E; --warn:#9A6510; --danger:#B93A31;
+  --accInk:#FFFFFF;
+  --shadow:0 6px 20px rgba(20,25,35,.10);
+}
+/* ============ 高对比（无障碍叠加） ============ */
+html[data-contrast="high"]{ --line:#8A8F98; --tx2:#7A7F88; }
+html[data-theme="dark"][data-contrast="high"]{ --line:#6E737C; --tx2:#B9B6B1; --tx:#FFFFFF; }
+html[data-contrast="high"] .card{ border-width:2px; }
+html[data-contrast="high"] .btn{ border-width:2px; }
+
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--tx);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  font-size:calc(15px * var(--ui));line-height:1.5;
+  -webkit-text-size-adjust:100%;}
+body{padding-bottom:76px;padding-bottom:calc(76px + env(safe-area-inset-bottom));}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+img{max-width:100%}
+.hide{display:none !important}
+code{background:var(--card2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:.92em}
+a{color:var(--acc)}
+
+/* ---- 顶部品牌栏 ---- */
+#top{position:sticky;top:0;z-index:30;background:var(--card);border-bottom:1px solid var(--line);
+  padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top));
+  display:flex;align-items:center;gap:10px}
+.logo{width:28px;height:28px;flex:0 0 28px}
+#top h1{font-size:calc(16px * var(--ui));margin:0;font-weight:600;letter-spacing:.5px;flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#top h1 small{color:var(--tx2);font-weight:400;font-size:.75em;margin-left:6px}
+.iconbtn{min-width:var(--tap);min-height:var(--tap);height:var(--tap);border-radius:8px;background:var(--card2);
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto;border:1px solid transparent}
+.iconbtn:active{background:var(--line)}
+.iconbtn svg{width:18px;height:18px;fill:var(--tx)}
+
+/* ---- 主容器 ---- */
+main{max-width:720px;margin:0 auto;padding:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;
+  box-shadow:var(--shadow)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.btn{background:var(--card2);border:1px solid var(--line);border-radius:9px;
+  padding:9px 12px;min-height:var(--tap);
+  display:inline-flex;align-items:center;gap:6px;justify-content:center}
+.btn:active{border-color:var(--acc)}
+.btn.primary{background:var(--acc);border-color:var(--acc);color:var(--accInk);font-weight:600}
+.btn.warn{color:var(--warn)}
+.btn.danger{color:var(--danger)}
+.btn.full{width:100%}
+.btn.sm{padding:6px 10px;min-height:30px;font-size:.9em}
+.btn[aria-pressed="true"]{border-color:var(--acc);color:var(--acc)}
+input[type=text],input[type=search],select,textarea{background:var(--card2);border:1px solid var(--line);
+  border-radius:9px;padding:9px 10px;width:100%;outline:none;min-height:var(--tap)}
+input:focus,select:focus,textarea:focus{border-color:var(--acc)}
+select{width:auto}
+label.chk{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+label.chk:last-child{border-bottom:none}
+label.chk input[type=checkbox]{width:20px;height:20px;flex:0 0 20px;margin-top:2px;accent-color:var(--acc)}
+label.chk span{flex:1;min-width:0}
+.muted{color:var(--tx2);font-size:.87em}
+h2{font-size:.95em;margin:0 0 8px;color:var(--tx2);font-weight:600;letter-spacing:.5px}
+h3{font-size:.95em;margin:14px 0 6px}
+h3:first-child{margin-top:0}
+p{margin:6px 0}
+ul,ol{margin:6px 0;padding-left:20px}
+li{margin:5px 0}
+hr{border:none;border-top:1px solid var(--line);margin:14px 0}
+
+/* ---- 分段控件 ---- */
+.seg{display:flex;background:var(--card2);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{flex:1;padding:9px 6px;min-height:var(--tap);color:var(--tx2);font-size:.93em;
+  display:flex;align-items:center;justify-content:center;gap:4px}
+.seg button.on{background:var(--acc);color:var(--accInk);font-weight:600}
+.seg button:not(.on):active{background:var(--line)}
+
+/* ---- 曲目列表 ---- */
+#list,#groups,#queue{list-style:none;margin:0;padding:0}
+#list li{display:flex;gap:10px;align-items:center;padding:10px;border-radius:10px;
+  border:1px solid transparent;background:var(--card2);margin-bottom:8px}
+#list li.cur{border-color:var(--acc);background:rgba(74,158,255,.10)}
+html[data-theme="light"] #list li.cur{background:rgba(31,122,224,.08)}
+.cover{width:42px;height:42px;flex:0 0 42px;border-radius:8px;background:var(--line);
+  display:flex;align-items:center;justify-content:center;overflow:hidden}
+.cover svg{width:22px;height:22px;fill:var(--tx2)}
+#list li.cur .cover svg{fill:var(--acc)}
+.meta{flex:1;min-width:0}
+.name{font-size:.93em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sub{font-size:.8em;color:var(--tx2);margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.bar{height:3px;background:var(--line);border-radius:2px;margin-top:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok);width:0}
+.del{min-width:var(--tap);min-height:var(--tap);border-radius:8px;color:var(--tx2);
+  display:flex;align-items:center;justify-content:center;font-size:1.15em;flex:0 0 auto}
+.del:active{color:var(--danger);background:rgba(226,104,95,.12)}
+.empty{text-align:center;color:var(--tx2);padding:36px 12px}
+.empty svg{width:46px;height:46px;fill:var(--line);margin-bottom:10px}
+.tagline{font-size:.8em;background:var(--card2);border:1px solid var(--line);border-radius:999px;
+  padding:2px 8px;color:var(--tx2)}
+
+/* ---- 分组卡 ---- */
+#groups li{display:flex;gap:10px;align-items:center;padding:12px;border-radius:10px;
+  background:var(--card2);border:1px solid transparent;margin-bottom:8px}
+#groups li.playing{border-color:var(--ok)}
+#groups li:active{background:var(--line)}
+.gico{width:40px;height:40px;flex:0 0 40px;border-radius:9px;background:var(--line);
+  display:flex;align-items:center;justify-content:center}
+.gico svg{width:21px;height:21px;fill:var(--tx2)}
+#groups li.playing .gico{background:rgba(63,192,138,.16)}
+#groups li.playing .gico svg{fill:var(--ok)}
+.gbadge{background:var(--line);border-radius:999px;padding:1px 7px;color:var(--tx2)}
+
+/* ---- 播放器页 ---- */
+#bigimg{height:150px;border-radius:12px;background:var(--card2);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;margin-bottom:12px;overflow:hidden}
+#bigimg svg{width:58px;height:58px;fill:var(--line)}
+#bigimg img{width:100%;height:100%;object-fit:cover}
+#ptitle{font-size:calc(16px * var(--ui));font-weight:600;text-align:center;word-break:break-all}
+#psub{font-size:.8em;color:var(--tx2);text-align:center;margin-top:4px}
+input[type=range]{width:100%;accent-color:var(--acc);margin:6px 0;min-height:var(--tap);background:transparent}
+input[type=range].thin{min-height:auto}
+.times{display:flex;justify-content:space-between;font-size:.8em;color:var(--tx2)}
+.ctrl{display:flex;align-items:center;justify-content:center;gap:12px;margin:10px 0;flex-wrap:wrap}
+.cbtn{width:calc(44px * var(--ui));height:calc(44px * var(--ui));min-width:44px;min-height:44px;
+  border-radius:50%;background:var(--card2);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.cbtn svg{width:20px;height:20px;fill:var(--tx)}
+.cbtn.main{width:calc(62px * var(--ui));height:calc(62px * var(--ui));min-width:62px;min-height:62px;
+  background:var(--acc);border-color:var(--acc)}
+.cbtn.main svg{width:26px;height:26px;fill:var(--accInk)}
+.cbtn.on{border-color:var(--acc)}
+.cbtn.on svg{fill:var(--acc)}
+.cbtn:active{background:var(--line)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+.chip{background:var(--card2);border:1px solid var(--line);border-radius:999px;
+  padding:7px 13px;font-size:.87em;min-height:32px;display:inline-flex;align-items:center;gap:5px}
+.chip.on{border-color:var(--acc);color:var(--acc)}
+.chip.grey{color:var(--tx2)}
+.nowbox{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px}
+.qempty{color:var(--tx2);font-size:.87em;text-align:center;padding:16px 8px}
+
+/* ---- 底部标签栏 ---- */
+.tabbar{position:fixed;left:0;right:0;bottom:58px;z-index:39;margin:0;display:flex;
+  background:var(--card);border-top:1px solid var(--line);padding-bottom:0}
+.tabbar button{flex:1;padding:10px 6px;min-height:40px;color:var(--tx2);font-size:.93em;
+  border-top:2px solid transparent;transition:color .15s}
+.tabbar button.on{color:var(--acc);font-weight:600;border-top-color:var(--acc)}
+.tabbar button:not(.on):active{background:var(--line)}
+
+/* ---- 底部迷你条 ---- */
+#mini{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--card);
+  border-top:1px solid var(--line);padding:8px 12px;padding-bottom:calc(8px + env(safe-area-inset-bottom));
+  cursor:pointer}
+#mini .mbar{display:flex;align-items:center;gap:10px}
+#mini .cover{width:38px;height:38px;flex:0 0 38px;cursor:pointer}
+#mini .name{font-size:.87em}
+#mprog{height:3px;background:var(--line);border-radius:2px;margin-top:6px;overflow:hidden}
+#mprog i{display:block;height:100%;background:var(--acc);width:0}
+
+/* ---- 弹层 ---- */
+#mask{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:60;display:flex;
+  align-items:flex-end;justify-content:center}
+html[data-theme="light"] #mask{background:rgba(20,25,35,.38)}
+#sheet{background:var(--card);width:100%;max-width:520px;border-radius:14px 14px 0 0;
+  border:1px solid var(--line);padding:14px;max-height:82vh;overflow:auto;
+  padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+#sheet h2{font-size:1em;color:var(--tx)}
+.srcline{background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:9px;
+  margin-top:8px;font-size:.82em;color:var(--tx2);word-break:break-all;
+  font-family:ui-monospace,Consolas,monospace}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:96px;z-index:80;
+  background:var(--card2);border:1px solid var(--line);color:var(--tx);border-radius:999px;
+  padding:9px 16px;font-size:.87em;opacity:0;pointer-events:none;transition:opacity .2s;
+  max-width:88vw;text-align:center;box-shadow:var(--shadow)}
+#toast.show{opacity:1}
+
+/* ============ 首页海报 ============ */
+#splash{position:fixed;inset:0;z-index:100;background:#12141A;color:#E6E4E1;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:28px 22px;text-align:center;overflow:hidden;
+  transition:opacity .5s ease, visibility .5s;}
+#splash.gone{opacity:0;visibility:hidden;pointer-events:none}
+#splash{background:
+  radial-gradient(90% 55% at 50% 12%, rgba(74,158,255,.18) 0%, rgba(18,20,26,0) 62%),
+  radial-gradient(70% 45% at 78% 82%, rgba(63,192,138,.13) 0%, rgba(18,20,26,0) 60%),
+  linear-gradient(180deg,#171A22 0%,#12141A 55%,#0E1016 100%);}
+#splashVeil{position:absolute;inset:0;
+  background:radial-gradient(120% 80% at 50% 20%,rgba(18,20,26,.10) 0%,rgba(18,20,26,.55) 62%,#12141A 100%)}
+#splashWave{position:absolute;left:0;right:0;bottom:0;height:38vh;z-index:1;
+  display:flex;align-items:flex-end;justify-content:center;gap:2.2%;
+  padding:0 6%;opacity:.30;pointer-events:none;
+  -webkit-mask-image:linear-gradient(180deg,transparent 0%,#000 55%,#000 100%);
+  mask-image:linear-gradient(180deg,transparent 0%,#000 55%,#000 100%)}
+#splashWave i{flex:1;max-width:14px;border-radius:999px 999px 0 0;
+  background:linear-gradient(180deg,#4A9EFF 0%,#3FC08A 100%)}
+@keyframes waveShift{0%{transform:scaleY(.55)}50%{transform:scaleY(1)}100%{transform:scaleY(.55)}}
+@media (prefers-reduced-motion:no-preference){
+  #splashWave i{animation:waveShift 3.4s ease-in-out infinite;transform-origin:bottom}
+  #splashWave i:nth-child(2n){animation-duration:4.1s;animation-delay:-.6s}
+  #splashWave i:nth-child(3n){animation-duration:2.9s;animation-delay:-1.3s}
+  #splashWave i:nth-child(5n){animation-duration:4.8s;animation-delay:-2.1s}
+}
+html[data-motion="low"] #splashWave i{animation:none !important}
+html[data-motion="low"] #splashInner{animation:none !important}
+
+#splashInner{position:relative;z-index:2;max-width:520px;width:100%;
+  display:flex;flex-direction:column;align-items:center;gap:14px;
+  animation:fadeUp .8s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+#splashLogo{width:88px;height:88px;filter:drop-shadow(0 8px 26px rgba(74,158,255,.35))}
+#splash h1{margin:0;font-size:34px;font-weight:700;letter-spacing:3px;line-height:1.2}
+#splash .en{font-size:12px;letter-spacing:5px;color:#8FE3C0;text-transform:uppercase;margin-top:-6px}
+#splash .desc{font-size:13.5px;color:#B9B6B1;line-height:1.85;max-width:400px}
+#splash .feats{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-top:2px}
+#splash .feats span{font-size:11.5px;border:1px solid rgba(230,228,225,.22);border-radius:999px;
+  padding:4px 11px;color:#CFCCC7;backdrop-filter:blur(4px)}
+#enterBtn{margin-top:8px;background:linear-gradient(135deg,#4A9EFF,#3FC08A);color:#0E1116;
+  font-weight:700;font-size:16px;letter-spacing:2px;border-radius:999px;
+  padding:14px 46px;box-shadow:0 10px 30px rgba(74,158,255,.32)}
+#enterBtn:active{transform:scale(.97)}
+#splash .foot{position:relative;z-index:2;margin-top:18px;font-size:11.5px;color:#8B8884;letter-spacing:.5px}
+#splashSkip{position:absolute;top:calc(14px + env(safe-area-inset-top));right:14px;z-index:3;
+  font-size:12.5px;color:#B9B6B1;border:1px solid rgba(230,228,225,.2);border-radius:999px;
+  padding:6px 14px;background:rgba(18,20,26,.4)}
+@media (max-height:640px){
+  #splash h1{font-size:27px} #splashLogo{width:66px;height:66px}
+  #splash .desc{font-size:12.5px;line-height:1.7}
+  #enterBtn{padding:12px 38px;font-size:15px}
+}
+
+/* ---- 均衡器 ---- */
+.eqrow{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;min-width:0}
+.eqrow label{font-size:.72em;color:var(--tx2);white-space:nowrap}
+.eqrow .val{font-size:.72em;color:var(--acc);font-variant-numeric:tabular-nums}
+input[type=range].vert{-webkit-appearance:slider-vertical;appearance:slider-vertical;
+  width:30px;height:120px;min-height:120px;writing-mode:vertical-lr;direction:rtl;
+  accent-color:var(--acc);margin:0}
+#eqWrap{display:flex;gap:2px;justify-content:space-between;overflow-x:auto;padding:4px 0 2px}
+.eqpresets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.eqpresets button{font-size:.83em;padding:6px 11px;border-radius:999px;border:1px solid var(--line);
+  background:var(--card2);color:var(--tx2)}
+.eqpresets button.on{border-color:var(--acc);color:var(--acc)}
+#eqCurve{width:100%;height:66px;display:block;background:var(--card2);border:1px solid var(--line);
+  border-radius:9px;margin-bottom:10px}
+
+/* ---- 无障碍 / 显示 ---- */
+.zoomrow{display:flex;align-items:center;gap:10px}
+.zoomrow input[type=range]{flex:1;margin:0}
+#zoomVal{min-width:52px;text-align:right;font-variant-numeric:tabular-nums;color:var(--acc);font-size:.9em}
+.preview{border:1px dashed var(--line);border-radius:9px;padding:10px;margin-top:10px;background:var(--card2)}
+
+/* ---- 文档页（使用说明 / 免责 / 关于） ---- */
+#v-doc main,#v-doc{padding-top:0}
+.docnav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.docnav button{font-size:.85em;padding:7px 13px;border-radius:999px;border:1px solid var(--line);
+  background:var(--card2);color:var(--tx2);min-height:32px}
+.docnav button.on{border-color:var(--acc);color:var(--acc);font-weight:600}
+.toTop{position:fixed;right:14px;bottom:calc(96px + env(safe-area-inset-bottom));z-index:35;
+  width:42px;height:42px;border-radius:50%;background:var(--card);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow)}
+.toTop svg{width:19px;height:19px;fill:var(--tx2)}
+
+/* ---- 作者卡 ---- */
+.author{display:flex;gap:12px;align-items:center;background:var(--card2);border:1px solid var(--line);
+  border-radius:12px;padding:12px;margin:10px 0}
+.author .av{width:52px;height:52px;flex:0 0 52px;border-radius:50%;
+  background:linear-gradient(135deg,#4A9EFF,#3FC08A);display:flex;align-items:center;justify-content:center;
+  font-weight:700;color:#0E1116;font-size:19px;letter-spacing:1px}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:.9em}
+.kv:last-child{border-bottom:none}
+.kv .k{color:var(--tx2)}
+.kv .v{text-align:right;word-break:break-all}
+</style>
+</head>
+<body>
+
+<!-- ============ 首页海报 ============ -->
+<div id="splash">
+  <div id=splashVeil></div>
+  <div id=splashWave aria-hidden=true>
+    <i style=height:22%></i><i style=height:44%></i><i style=height:70%></i><i style=height:96%></i>
+    <i style=height:62%></i><i style=height:38%></i><i style=height:80%></i><i style=height:50%></i>
+    <i style=height:28%></i><i style=height:66%></i><i style=height:90%></i><i style=height:42%></i>
+    <i style=height:74%></i><i style=height:34%></i><i style=height:58%></i><i style=height:20%></i>
+  </div>
+  <button id="splashSkip">跳过</button>
+  <div id="splashInner">
+    <svg id="splashLogo" viewBox="0 0 64 64" aria-hidden="true">
+      <rect width="64" height="64" rx="15" fill="#1B1C1F" stroke="#3A3D43" stroke-width="1.5"/>
+      <circle cx="24" cy="41" r="9.5" fill="none" stroke="#4A9EFF" stroke-width="5"/>
+      <path d="M33.5 41V17l17-4.5v24" fill="none" stroke="#3FC08A" stroke-width="5" stroke-linejoin="round"/>
+    </svg>
+    <h1>闲 听</h1>
+    <div class="en">XianTuner</div>
+    <div class="desc">本机音频，随心整理。文件夹整队播放、均衡器调音、主题随系统而变——<br>不联网、无广告、不上传任何数据。</div>
+    <div class="feats">
+      <span>整文件夹入队</span><span>整夜循环</span><span>10 段均衡器</span>
+      <span>深浅主题</span><span>睡眠定时</span><span>断点续播</span>
+    </div>
+    <button id="enterBtn">进入播放器</button>
+  </div>
+  <div class="foot">© 永远的兰兰 · Lanlan Eternal</div>
+</div>
+
+<!-- ============ 顶栏 ============ -->
+<header id="top">
+  <svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="var(--card2)"/><circle cx="24" cy="40" r="9" fill="none" stroke="var(--acc)" stroke-width="4"/><path d="M33 40V18l16-4v22" fill="none" stroke="var(--ok)" stroke-width="4" stroke-linejoin="round"/></svg>
+  <h1>闲听 XianTuner<small>本地离线播放</small></h1>
+  <button class="iconbtn" id="btnTheme" title="切换主题" aria-label="切换主题">
+    <svg id="icTheme" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36A5.39 5.39 0 0 1 16 13a5.4 5.4 0 0 1-3.64-1.36A5.4 5.4 0 0 1 11 8c0-1.55.65-2.95 1.7-3.94C12.46 4.02 12.23 4 12 4z" opacity=".9"/></svg>
+  </button>
+</header>
+
+<!-- ============ 曲库 ============ -->
+<main id="v-lib">
+  <div class="card">
+    <div class="row">
+      <button class="btn primary grow" id="btnAdd">添加音频</button>
+      <button class="btn grow" id="btnAddDir">添加文件夹</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <input type="search" id="q" placeholder="搜索曲名…" class="grow">
+      <select id="sort">
+        <option value="added">最近添加</option>
+        <option value="played">最近播放</option>
+        <option value="name">名称 A-Z</option>
+        <option value="dur">时长</option>
+      </select>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <span class="muted grow" id="stat">曲目 0 首</span>
+      <button class="btn sm" id="btnMakeGroup">新建分组</button>
+    </div>
+  </div>
+
+  <div class="seg" style="margin-bottom:12px" role="tablist" aria-label="曲库视图">
+    <button data-mode="files" class="on">按文件</button>
+    <button data-mode="folder">按文件夹</button>
+  </div>
+
+  <section id="modeFiles" role="tabpanel">
+    <ul id="list"></ul>
+    <div class="empty" id="empty">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6zm0 16a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg>
+      <div>曲库是空的</div>
+      <div class="muted">点上面「添加音频」，或「添加文件夹」一次导入整个目录</div>
+    </div>
+  </section>
+
+  <section id="modeFolder" class="hide" role="tabpanel">
+    <ul id="groups"></ul>
+    <div class="empty" id="gempty">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2z"/></svg>
+      <div>还没有文件夹</div>
+      <div class="muted">用「添加文件夹」导入整个目录，或「新建分组」把已有曲目归到一起</div>
+    </div>
+  </section>
+</main>
+
+<!-- ============ 播放器 ============ -->
+<main id="v-play" class="hide">
+  <div class="card">
+    <div id="bigimg"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6zm0 16a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/></svg></div>
+    <div id="ptitle">未在播放</div>
+    <div id="psub">选一首开始</div>
+    <input type="range" id="seek" min="0" max="1000" value="0" aria-label="播放进度">
+    <div class="times"><span id="tcur">0:00</span><span id="tdur">0:00</span></div>
+    <div class="ctrl">
+      <button class="cbtn" id="bBack" title="后退 15 秒" aria-label="后退 15 秒"><svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/></svg></button>
+      <button class="cbtn" id="bPrev" aria-label="上一首"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3 6l9-6v12z"/></svg></button>
+      <button class="cbtn main" id="bPlay" aria-label="播放或暂停"><svg id="icPlay" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+      <button class="cbtn" id="bNext" aria-label="下一首"><svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM6 6l9 6-9 6z"/></svg></button>
+      <button class="cbtn" id="bFwd" title="前进 30 秒" aria-label="前进 30 秒"><svg viewBox="0 0 24 24"><path d="M12 5V1l5 5-5 5V7a5 5 0 1 0 5 5h2a7 7 0 1 1-7-7z"/></svg></button>
+    </div>
+    <div class="chips">
+      <button class="chip" id="cLoop">循环关</button>
+      <button class="chip" id="cShuffle">随机关</button>
+      <button class="chip" id="cSpeed">1.0x</button>
+      <button class="chip" id="cSleep">睡眠定时</button>
+      <button class="chip" id="cReset">回到开头</button>
+      <button class="chip" id="cEq">均衡器</button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>当前播放队列 <span class="muted" id="qinfo" style="font-weight:400"></span></h2>
+    <div id="qnow"></div>
+    <div class="row" style="margin-bottom:8px">
+      <button class="btn grow" id="qAddGroup">把分组加进队列</button>
+      <button class="btn danger" id="qClear">清空队列</button>
+    </div>
+    <ul id="queue"></ul>
+  </div>
+</main>
+
+<!-- ============ 设置 ============ -->
+<main id="v-more" class="hide">
+  <div class="card">
+    <h2>外观主题</h2>
+    <div class="seg" id="segTheme" role="tablist" aria-label="主题">
+      <button data-th="light">浅色</button>
+      <button data-th="dark">深色</button>
+      <button data-th="system" class="on">跟随系统</button>
+    </div>
+    <p class="muted" style="margin-top:8px">「跟随系统」会随手机的深色/浅色模式自动切换；手动选过之后以你选的为准。</p>
+  </div>
+
+  <div class="card">
+    <h2 data-i18n="setLang">界面语言</h2>
+    <div class="seg" id="segLang" role="tablist" aria-label="Language">
+      <button data-lg="zh">简体中文</button>
+      <button data-lg="en">English</button>
+      <button data-lg="system" class="on">跟随系统</button>
+    </div>
+    <p class="muted" style="margin-top:8px" data-i18n="langHint">「跟随系统」按手机语言自动选；手动选过之后以你选的为准。</p>
+  </div>
+
+  <div class="card">
+    <h2>无障碍 · 显示</h2>
+    <div class="zoomrow">
+      <span class="muted">界面缩放</span>
+      <input type="range" id="zoom" min="85" max="160" step="5" value="100" aria-label="界面缩放">
+      <span id="zoomVal">100%</span>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn sm grow" id="zoomReset">恢复默认 100%</button>
+    </div>
+    <label class="chk" style="margin-top:6px"><input type="checkbox" id="optContrast"><span>高对比度模式<span class="muted" style="display:block">加强边框与文字对比，弱光或视力不便时更好读</span></span></label>
+    <label class="chk"><input type="checkbox" id="optBigTap"><span>加大触控热区<span class="muted" style="display:block">按钮最小高度提到 44px，减少误触</span></span></label>
+    <label class="chk"><input type="checkbox" id="optReduceMotion"><span>减少动效<span class="muted" style="display:block">关掉淡入与位移动画，对晕动敏感更友好</span></span></label>
+    <div class="preview">
+      <div class="muted" style="margin-bottom:6px">预览</div>
+      <div class="name">火车行驶 · 03</div>
+      <div class="sub"><span class="tagline">火车声音</span><span>33:20</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>播放行为</h2>
+    <label class="chk"><input type="checkbox" id="optKeep" checked><span>复制音频到曲库<span class="muted" style="display:block">关掉则不占手机空间，但关掉浏览器后就没了</span></span></label>
+    <label class="chk"><input type="checkbox" id="optResume" checked><span>记住每首播放位置<span class="muted" style="display:block">听长节目必备，下次自动接着播</span></span></label>
+    <label class="chk"><input type="checkbox" id="optFade" checked><span>暂停/播放淡入淡出<span class="muted" style="display:block">切换瞬间音量平滑过渡，避免爆音</span></span></label>
+    <label class="chk"><input type="checkbox" id="optFocus" checked><span>独占音频焦点<span class="muted" style="display:block">离开本页（切到其他 App）自动暂停，不与其他应用抢声。关掉则可后台混播</span></span></label>
+    <label class="chk"><input type="checkbox" id="optFocusPause"><span>被其他应用打断时自动暂停<span class="muted" style="display:block">来电或别的播放器出声时，暂停本播放器</span></span></label>
+  </div>
+
+  <div class="card">
+    <h2>均衡器</h2>
+    <p class="muted">10 段图形均衡器，另带低音增强与响度补偿。设置立即生效，并自动记住。</p>
+    <div class="row" style="margin-top:8px">
+      <button class="btn grow" id="btnEqOpen">打开均衡器</button>
+      <button class="btn" id="btnEqOff">全部归零</button>
+    </div>
+    <div class="eqpresets" id="eqQuick" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card">
+    <h2>文件与备份</h2>
+    <div class="muted" id="storage">统计中…</div>
+    <p class="muted" style="margin-top:6px">曲目清单（名称/时长/进度/分组）可导出成 JSON，换新手机时导回来。音频文件本身不在这份备份里。</p>
+    <div class="row" style="margin-top:8px">
+      <button class="btn grow" id="btnExport2">导出清单</button>
+      <button class="btn grow" id="btnImport">导入清单</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn grow" id="btnGotodoc">打开使用说明</button>
+      <button class="btn danger" id="btnClear">清空整个曲库</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>版本</h2>
+    <div class="kv"><span class="k">软件</span><span class="v">闲听 XianTuner</span></div>
+    <div class="kv"><span class="k">版本</span><span class="v" id="verTxt">v2.0</span></div>
+    <div class="kv"><span class="k">作者</span><span class="v">永远的兰兰</span></div>
+    <div class="kv"><span class="k">运行方式</span><span class="v">纯本地 · 无需联网</span></div>
+  </div>
+</main>
+
+<!-- ============ 文档：使用说明 / 免责 / 关于 ============ -->
+<main id="v-doc" class="hide">
+  <div class="docnav" id="docNav">
+    <button data-doc="help" class="on">使用说明</button>
+    <button data-doc="faq">常见问题</button>
+    <button data-doc="terms">免责声明</button>
+    <button data-doc="about">关于作者</button>
+  </div>
+  <div id="docBody"></div>
+</main>
+
+<!-- ============ 迷你条 ============ -->
+<footer id="mini" class="hide">
+  <div class="mbar">
+    <div class="cover" id="mcov"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg></div>
+    <div class="meta"><div class="name" id="mname">未在播放</div><div class="sub" id="msub"></div></div>
+    <button class="iconbtn" id="mplay" aria-label="播放或暂停"><svg id="micPlay" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+  </div>
+  <div id="mprog"><i></i></div>
+</footer>
+
+<div id="tabs" class="tabbar">
+  <button data-v="lib" class="on">曲库</button>
+  <button data-v="play">播放</button>
+  <button data-v="more">设置</button>
+  <button data-v="doc">说明</button>
+</div>
+
+<button class="toTop hide" id="toTop" aria-label="回到顶部"><svg viewBox="0 0 24 24"><path d="M12 4l7 7h-4v9h-6v-9H5z"/></svg></button>
+
+<div id="mask" class="hide" role="dialog" aria-modal="true"><div id="sheet"><h2 id="shTitle"></h2><div id="shBody"></div><div class="row" style="margin-top:12px"><button class="btn full" id="shClose">关闭</button></div></div></div>
+<div id="toast" role="status"></div>
+
+<input type="file" id="fp" multiple accept="audio/*,.mp3,.m4a,.flac,.ogg,.wav,.aac" class="hide">
+<input type="file" id="fpd" multiple webkitdirectory directory class="hide">
+<audio id="audio" preload="metadata"></audio>
+
+<script>
+(function(){
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+var VER = '2.0';
+var DB_NAME='xiantuner', DB_VER=4, STORE='tracks', STORE_BLOB='blobs', STORE_GROUP='groups';
+
+/* 文件自身的字节数（用于「关于」页显示体积），运行时算不出就用估算值 */
+var _fileSize = 0;
+try{
+  if(typeof document !== 'undefined' && document.documentElement &&
+     document.documentElement.outerHTML && typeof Blob !== 'undefined'){
+    _fileSize = new Blob([document.documentElement.outerHTML]).size / 1024;
+  }
+}catch(e){ _fileSize = 0; }
+if(!_fileSize) _fileSize = 130;
+
+var state = {
+  tracks: [],       // 元数据数组
+  groups: [],       // 分组（文件夹）数组
+  listMode: 'files',// 曲库视图：files | folder
+  queue: [],        // 播放队列（track id 数组）
+  qi: 0,            // 队列中的当前位置
+  curId: null,      // 当前曲目 id
+  curUrl: null,     // 当前 blob URL
+  seekDrag: false,
+  db: null,
+  dbOk: false,
+  loop: 0,          // 0 关 1 单曲 2 列表
+  shuffle: false,
+  sleepEnd: 0,
+  sleepTimer: null,
+  // v2 新增
+  theme: 'system',  // light | dark | system
+  lang: 'system',   // zh | en | system
+  zoom: 100,        // 85 ~ 160
+  contrast: false,
+  bigTap: false,
+  reduceMotion: false,
+  fade: true,       // 淡入淡出
+  focus: true,      // 独占音频焦点
+  focusPause: false,// 被打断时暂停
+  eq: null,         // 均衡器参数
+  audioCtx: null,
+  gain: null,
+  eqNodes: null,
+  fadeTimer: null,
+  pausedByFocus: false
+};
+
+/* ================= i18n ================= */
+var I18N = {
+  zh: {
+    appName:'闲听 XianTuner', appSub:'本地离线播放',
+    tabLib:'曲库', tabPlay:'播放', tabMore:'设置', tabDoc:'说明',
+    libAdd:'添加音频', libAddDir:'添加文件夹', libSearch:'搜索曲名…',
+    libSortAdded:'最近添加', libSortPlayed:'最近播放', libSortName:'名称 A-Z', libSortDur:'时长',
+    libStat:'曲目 {0} 首', libNewGroup:'新建分组',
+    modeFiles:'按文件', modeFolder:'按文件夹',
+    emptyLib:'曲库是空的', emptyLibHint:'点上面「添加音频」，或「添加文件夹」一次导入整个目录',
+    emptyGrp:'还没有文件夹', emptyGrpHint:'用「添加文件夹」导入整个目录，或「新建分组」把已有曲目归到一起',
+    nowPlaying:'未在播放', pickOne:'选一首开始',
+    qTitle:'当前播放队列', qAddGroup:'把分组加进队列', qClear:'清空队列', qEmpty:'队列是空的，先去曲库加点音频',
+    chipLoopOff:'循环关', chipLoopOne:'单曲循环', chipLoopAll:'列表循环',
+    chipShufOff:'随机关', chipShufOn:'随机开', chipSleep:'睡眠定时', chipReset:'回到开头', chipEq:'均衡器',
+    setTheme:'外观主题', thLight:'浅色', thDark:'深色', thSystem:'跟随系统',
+    setLang:'界面语言', langHint:'「跟随系统」按手机语言自动选；手动选过之后以你选的为准。',
+    setA11y:'无障碍 · 显示', zoom:'界面缩放', zoomReset:'恢复默认 100%',
+    optContrast:'高对比度模式', optContrastD:'加强边框与文字对比，弱光或视力不便时更好读',
+    optBigTap:'加大触控热区', optBigTapD:'按钮最小高度提到 44px，减少误触',
+    optMotion:'减少动效', optMotionD:'关掉淡入与位移动画，对晕动敏感更友好',
+    preview:'预览',
+    setPlay:'播放行为',
+    optKeep:'复制音频到曲库', optKeepD:'关掉则不占手机空间，但关掉浏览器后就没了',
+    optResume:'记住每首播放位置', optResumeD:'听长节目必备，下次自动接着播',
+    optFade:'暂停/播放淡入淡出', optFadeD:'切换瞬间音量平滑过渡，避免爆音',
+    optFocus:'独占音频焦点', optFocusD:'离开本页（切到其他 App）自动暂停，不与其他应用抢声。关掉则可后台混播',
+    optFocusPause:'被其他应用打断时自动暂停', optFocusPauseD:'来电或别的播放器出声时，暂停本播放器',
+    setEq:'均衡器', eqDesc:'10 段图形均衡器，另带低音增强与响度补偿。设置立即生效，并自动记住。',
+    eqOpen:'打开均衡器', eqOff:'全部归零',
+    setFile:'文件与备份', fileDesc:'曲目清单（名称/时长/进度/分组）可导出成 JSON，换新手机时导回来。音频文件本身不在这份备份里。',
+    btnExport:'导出清单', btnImport:'导入清单', btnDoc:'打开使用说明', btnClear:'清空整个曲库',
+    setVer:'版本', kApp:'软件', kVer:'版本', kAuthor:'作者', kMode:'运行方式', vMode:'纯本地 · 无需联网',
+    docHelp:'使用说明', docFaq:'常见问题', docTerms:'免责声明', docAbout:'关于作者',
+    enter:'进入播放器', skip:'跳过',
+    splashDesc:'本机音频，随心整理。文件夹整队播放、均衡器调音、主题随系统而变——不联网、无广告、不上传任何数据。',
+    splashFeat:['整文件夹入队','整夜循环','10 段均衡器','深浅主题','睡眠定时','断点续播'],
+    ready:'准备就绪', importing:'导入中…', imported:'已导入 {0} 首',
+    deleted:'已删除', saved:'已保存', cleared:'已清空', copied:'已复制',
+    confirmClear:'确定要清空整个曲库吗？所有音频、分组、队列都会被删除，无法恢复。',
+    confirmClearGroup:'确定删除这个分组吗？音频本身不会被删掉。'
+  },
+  en: {
+    appName:'XianTuner', appSub:'offline player',
+    tabLib:'Library', tabPlay:'Player', tabMore:'Settings', tabDoc:'Docs',
+    libAdd:'Add audio', libAddDir:'Add folder', libSearch:'Search title…',
+    libSortAdded:'Recently added', libSortPlayed:'Recently played', libSortName:'Name A-Z', libSortDur:'Duration',
+    libStat:'{0} track(s)', libNewGroup:'New collection',
+    modeFiles:'By file', modeFolder:'By folder',
+    emptyLib:'Library is empty', emptyLibHint:'Tap "Add audio", or "Add folder" to import a whole directory at once',
+    emptyGrp:'No folders yet', emptyGrpHint:'Use "Add folder" to import a directory, or "New collection" to group existing tracks',
+    nowPlaying:'Nothing playing', pickOne:'Pick a track to start',
+    qTitle:'Play queue', qAddGroup:'Add collection to queue', qClear:'Clear queue', qEmpty:'Queue is empty — add some audio from the Library first',
+    chipLoopOff:'Loop off', chipLoopOne:'Repeat one', chipLoopAll:'Repeat all',
+    chipShufOff:'Shuffle off', chipShufOn:'Shuffle on', chipSleep:'Sleep timer', chipReset:'Restart', chipEq:'Equalizer',
+    setTheme:'Appearance', thLight:'Light', thDark:'Dark', thSystem:'Follow system',
+    setLang:'Language', langHint:'"Follow system" picks your phone language. A manual choice always wins.',
+    setA11y:'Accessibility · Display', zoom:'UI scale', zoomReset:'Reset to 100%',
+    optContrast:'High contrast', optContrastD:'Stronger borders and text contrast — easier to read',
+    optBigTap:'Larger tap targets', optBigTapD:'Minimum button height becomes 44px to reduce mis-taps',
+    optMotion:'Reduce motion', optMotionD:'Disables fade and slide animations',
+    preview:'Preview',
+    setPlay:'Playback',
+    optKeep:'Copy audio into library', optKeepD:'Off saves phone storage, but tracks vanish when the browser closes',
+    optResume:'Remember playback position', optResumeD:'Essential for long shows — resumes where you left off',
+    optFade:'Fade in/out on pause & play', optFadeD:'Smooth volume ramp, avoids clicks and pops',
+    optFocus:'Exclusive audio focus', optFocusD:'Auto-pause when you leave this page, so it never fights other apps. Turn off to keep playing in background',
+    optFocusPause:'Pause when interrupted', optFocusPauseD:'Pause when a call or another player takes over the audio',
+    setEq:'Equalizer', eqDesc:'10-band graphic EQ with bass boost and loudness. Applies instantly and is remembered.',
+    eqOpen:'Open equalizer', eqOff:'Reset all to flat',
+    setFile:'Files & backup', fileDesc:'Export the track list (name/duration/position/collections) as JSON and import it on a new phone. Audio files are not included.',
+    btnExport:'Export list', btnImport:'Import list', btnDoc:'Open user guide', btnClear:'Erase entire library',
+    setVer:'Version', kApp:'App', kVer:'Version', kAuthor:'Author', kMode:'Mode', vMode:'Fully local · no network',
+    docHelp:'User guide', docFaq:'FAQ', docTerms:'Disclaimer', docAbout:'About',
+    enter:'Enter player', skip:'Skip',
+    splashDesc:'Your local audio, organised your way. Folder-wide queues, a real equalizer, themes that follow your system — offline, ad-free, nothing uploaded.',
+    splashFeat:['Folder queues','All-night loop','10-band EQ','Light & dark','Sleep timer','Resume'],
+    ready:'Ready', importing:'Importing…', imported:'Imported {0} track(s)',
+    deleted:'Deleted', saved:'Saved', cleared:'Cleared', copied:'Copied',
+    confirmClear:'Erase the entire library? All audio, collections and the queue will be deleted permanently.',
+    confirmClearGroup:'Delete this collection? The audio files themselves are kept.'
+  }
+};
+var LANG = 'zh';
+function L(key){
+  var dict = I18N[LANG] || I18N.zh;
+  var v = dict[key];
+  if(v === undefined) v = I18N.zh[key];
+  if(v === undefined) return key;
+  if(Object.prototype.toString.call(v) === '[object Array]'){
+    for(var i=1;i<arguments.length;i++) v = v.map(function(x){ return x; });
+    return v;
+  }
+  var out = String(v);
+  for(var i=1;i<arguments.length;i++) out = out.replace('{'+(i-1)+'}', arguments[i]);
+  return out;
+}
+function pickLang(pref){
+  if(pref === 'zh' || pref === 'en') return pref;
+  var nav = (navigator && (navigator.language || (navigator.languages&&navigator.languages[0]))) || 'zh';
+  return String(nav).toLowerCase().indexOf('zh') === 0 ? 'zh' : 'en';
+}
+
+/* ================= 本地设置读写 ================= */
+var LS = {
+  get: function(k,d){ try{ var v=localStorage.getItem(k); return v==null?d:JSON.parse(v);}catch(e){return d;} },
+  set: function(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+
+/* ================= 工具 ================= */
+function fmt(s){
+  s = Math.floor(s||0);
+  if(!isFinite(s) || s<0) return '0:00';
+  var h=Math.floor(s/3600), m=Math.floor((s%3600)/60), ss=s%60;
+  if(h>0) return h+':'+('0'+m).slice(-2)+':'+('0'+ss).slice(-2);
+  return m+':'+('0'+ss).slice(-2);
+}
+function fmtSize(b){
+  b = b||0;
+  if(b>1073741824) return (b/1073741824).toFixed(2)+' GB';
+  if(b>1048576) return (b/1048576).toFixed(1)+' MB';
+  return Math.round(b/1024)+' KB';
+}
+function cleanName(n){ return String(n||'').replace(/\.[^.]+$/,'').replace(/_/g,' '); }
+/* HTML 转义：所有拼进 innerHTML 的用户数据都要过这一层 */
+function esc(s){
+  return String(s==null?'':s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+var toastTimer=null;
+function toast(msg){
+  var el=$('toast'); if(!el) return;
+  el.textContent=msg; el.className='show';
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){ el.className=''; }, 2200);
+}
+function errBox(msg, detail){ sheet(LANG==='en'?'Error':'出错了', '<p>'+esc(msg)+'</p>'+(detail?'<div class="srcline">'+esc(detail)+'</div>':'')); }
+function sheet(title, html){
+  $('shTitle').textContent=title; $('shBody').innerHTML=html; $('mask').classList.remove('hide');
+}
+function closeSheet(){ $('mask').classList.add('hide'); }
+
+/* ================= 主题 ================= */
+var mqlDark = null;
+function systemDark(){
+  try{ return !!(mqlDark && mqlDark.matches); }catch(e){ return true; }
+}
+function resolvedTheme(){
+  if(state.theme === 'system') return systemDark() ? 'dark' : 'light';
+  return state.theme === 'light' ? 'light' : 'dark';
+}
+function applyTheme(){
+  var th = resolvedTheme();
+  document.documentElement.setAttribute('data-theme', th);
+  document.documentElement.setAttribute('data-contrast', state.contrast ? 'high' : '');
+  var mt = $('metaTheme');
+  if(mt) mt.setAttribute('content', th === 'light' ? '#F2F3F5' : '#1B1C1F');
+  var btn = $('btnTheme');
+  if(btn) btn.title = state.theme==='system'
+      ? (LANG==='en'?'Theme: follow system':'主题：跟随系统')
+      : (state.theme==='light' ? (LANG==='en'?'Theme: light':'主题：浅色') : (LANG==='en'?'Theme: dark':'主题：深色'));
+  syncSeg('segTheme', 'data-th', state.theme);
+  syncSeg('segLang', 'data-lg', state.lang);
+}
+function setTheme(v){
+  state.theme = v; LS.set('xt_theme', v); applyTheme();
+}
+
+/* ================= 无障碍缩放 / 对比 / 触控 ================= */
+function applyA11y(){
+  var root = document.documentElement;
+  root.style.setProperty('--ui', String(state.zoom/100));
+  root.style.setProperty('--tap', state.bigTap ? '44px' : '34px');
+  root.setAttribute('data-contrast', state.contrast ? 'high' : '');
+  root.setAttribute('data-motion', state.reduceMotion ? 'low' : '');
+}
+function setZoom(v){
+  v = Math.min(160, Math.max(85, parseInt(v,10)||100));
+  state.zoom = v; LS.set('xt_zoom', v); applyA11y();
+  var zv = $('zoomVal'); if(zv) zv.textContent = v + '%';
+  var zr = $('zoom'); if(zr) zr.value = String(v);
+}
+
+/* ================= IndexedDB ================= */
+function putBlob(id, blob){
+  if(!state.dbOk) return Promise.reject(new Error('db-null'));
+  return new Promise(function(res, rej){
+    var tx = state.db.transaction(STORE_BLOB, 'readwrite');
+    tx.objectStore(STORE_BLOB).put({id:id, blob:blob});
+    tx.oncomplete = function(){ res(true); };
+    tx.onerror = function(e){ rej((e.target.error&&e.target.error.message)||'blob-put'); };
+  });
+}
+function getBlob(id){
+  if(!state.dbOk) return Promise.reject(new Error('db-null'));
+  return new Promise(function(res, rej){
+    var tx = state.db.transaction(STORE_BLOB, 'readonly');
+    var rq = tx.objectStore(STORE_BLOB).get(id);
+    rq.onsuccess = function(){ res(rq.result ? rq.result.blob : null); };
+    rq.onerror = function(e){ rej((e.target.error&&e.target.error.message)||'blob-get'); };
+  });
+}
+function delBlob(id){
+  if(!state.dbOk) return Promise.resolve(false);
+  return new Promise(function(res){
+    try{
+      var tx = state.db.transaction(STORE_BLOB, 'readwrite');
+      tx.objectStore(STORE_BLOB)["delete"](id);
+      tx.oncomplete=function(){ res(true); };
+      tx.onerror=function(){ res(false); };
+    }catch(e){ res(false); }
+  });
+}
+function openDB(){
+  return new Promise(function(res, rej){
+    try{
+      if(!(typeof indexedDB!=='undefined' && indexedDB)) return rej(new Error('no-idb'));
+      var rq = indexedDB.open(DB_NAME, DB_VER);
+      rq.onupgradeneeded = function(e){
+        var db = e.target.result;
+        if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, {keyPath:'id'});
+        if(!db.objectStoreNames.contains(STORE_BLOB)) db.createObjectStore(STORE_BLOB, {keyPath:'id'});
+        if(!db.objectStoreNames.contains(STORE_GROUP)) db.createObjectStore(STORE_GROUP, {keyPath:'id'});
+      };
+      rq.onsuccess = function(e){ res(e.target.result); };
+      rq.onerror = function(e){ rej((e.target.error&&e.target.error.message)||'idb-open-failed'); };
+    }catch(err){ rej(err); }
+  });
+}
+function idb(mode, fn, store){
+  return new Promise(function(res, rej){
+    if(!state.db) return rej(new Error('db-null'));
+    try{
+      var tx = state.db.transaction(store || STORE, mode);
+      var st = tx.objectStore(store || STORE);
+      var out = fn(st);
+      tx.oncomplete = function(){ res(out && out.result!==undefined ? out.result : undefined); };
+      tx.onerror = function(e){ rej((e.target.error&&e.target.error.message)||'tx-failed'); };
+      tx.onabort = function(e){ rej((e.target.error&&e.target.error.message)||'tx-abort'); };
+    }catch(err){ rej(err); }
+  });
+}
+function idbGetAll(){
+  return new Promise(function(res, rej){
+    if(!state.db) return rej(new Error('db-null'));
+    var tx=state.db.transaction(STORE,'readonly'), st=tx.objectStore(STORE), rq=st.getAll();
+    rq.onsuccess=function(){ res(rq.result||[]); };
+    rq.onerror=function(e){ rej(e.target.error||new Error('getall')); };
+  });
+}
+function idbGet(id){
+  return new Promise(function(res, rej){
+    if(!state.db) return rej(new Error('db-null'));
+    var tx=state.db.transaction(STORE,'readonly'), st=tx.objectStore(STORE), rq=st.get(id);
+    rq.onsuccess=function(){ res(rq.result); };
+    rq.onerror=function(e){ rej(e.target.error||new Error('get')); };
+  });
+}
+function idbAllGroups(){
+  return new Promise(function(res, rej){
+    if(!state.db) return rej(new Error('db-null'));
+    var tx=state.db.transaction(STORE_GROUP,'readonly'), rq=tx.objectStore(STORE_GROUP).getAll();
+    rq.onsuccess=function(){ res(rq.result||[]); };
+    rq.onerror=function(e){ rej(e.target.error||new Error('groups-getall')); };
+  });
+}
+function putGroup(g){
+  if(!state.dbOk) return Promise.resolve(false);
+  return new Promise(function(res, rej){
+    var tx=state.db.transaction(STORE_GROUP,'readwrite');
+    tx.objectStore(STORE_GROUP).put({id:g.id, name:g.name, trackIds:g.trackIds,
+                                     createdAt:g.createdAt, mode:g.mode||'', look:g.look||''});
+    tx.oncomplete=function(){ res(true); };
+    tx.onerror=function(e){ rej((e.target.error&&e.target.error.message)||'group-put'); };
+  });
+}
+function delGroup(id){
+  if(!state.dbOk) return Promise.resolve(false);
+  return new Promise(function(res, rej){
+    var tx=state.db.transaction(STORE_GROUP,'readwrite');
+    tx.objectStore(STORE_GROUP)["delete"](id);
+    tx.oncomplete=function(){ res(true); };
+    tx.onerror=function(e){ rej((e.target.error&&e.target.error.message)||'group-del'); };
+  });
+}
+
+/* ================= 分组 / 队列 逻辑 ================= */
+function byGroup(id){
+  for(var i=0;i<state.groups.length;i++) if(state.groups[i].id===id) return state.groups[i];
+  return null;
+}
+/* 曲目所属文件夹：优先取 folder 型分组名，否则用导入时的目录名 */
+function folderOf(t){
+  for(var i=0;i<state.groups.length;i++){
+    var g = state.groups[i];
+    if(g.look !== 'folder') continue;
+    if(g.trackIds.indexOf(t.id) >= 0) return g.name;
+  }
+  return t.dir || (LANG==='en'?'Ungrouped':'未分组');
+}
+function dirOf(t){
+  for(var i=0;i<state.groups.length;i++){
+    var g = state.groups[i];
+    if(g.look === 'folder' && g.trackIds.indexOf(t.id) >= 0) return g;
+  }
+  return null;
+}
+function groupTracks(g){
+  if(!g) return [];
+  var out=[];
+  for(var i=0;i<g.trackIds.length;i++){
+    var t = byId(g.trackIds[i]);
+    if(t) out.push(t);
+  }
+  return out;
+}
+function groupDur(g){
+  return groupTracks(g).reduce(function(a,t){ return a + (t.duration||0); }, 0);
+}
+function isGroupPlaying(g){
+  if(!g || !state.curId) return false;
+  if(g.trackIds.indexOf(state.curId) < 0) return false;
+  var list = groupTracks(g);
+  if(!list.length) return false;
+  for(var i=0;i<list.length;i++) if(state.queue.indexOf(list[i].id) < 0) return false;
+  return true;
+}
+function byId(id){
+  for(var i=0;i<state.tracks.length;i++) if(state.tracks[i].id===id) return state.tracks[i];
+  return null;
+}
+function guessDir(f){
+  var rp = f && (f.webkitRelativePath || f.relativePath);
+  if(rp && rp.indexOf('/') > 0){
+    var parts = rp.split('/');
+    if(parts.length >= 2) return parts[0];
+  }
+  return '';
+}
+function byGroupExists(name){
+  for(var i=0;i<state.groups.length;i++) if(state.groups[i].name === name) return state.groups[i];
+  return null;
+}
+
+/* 设置播放队列；opts 可带 loop / shuffle / saveMode */
+function setQueue(ids, startIdx, opts){
+  opts = opts || {};
+  if(!ids || !ids.length) return false;
+  ids = ids.filter(function(id){ return !!byId(id); });
+  if(!ids.length) return false;
+  state.queue = ids.slice();
+  if(typeof opts.shuffle === 'boolean') state.shuffle = opts.shuffle;
+  if(typeof opts.loop === 'number') state.loop = opts.loop;
+  LS.set('xt_queue', state.queue);
+  LS.set('xt_loop', state.loop);
+  LS.set('xt_shuffle', state.shuffle);
+  var start = (typeof startIdx === 'number' && startIdx >= 0) ? startIdx : 0;
+  // 随机模式下不把游标直接设成 0，保证第一首是随机的
+  if(state.shuffle && typeof startIdx !== 'number'){
+    state.qi = Math.floor(Math.random()*state.queue.length);
+  }else{
+    state.qi = Math.min(start, state.queue.length-1);
+  }
+  playId(state.queue[state.qi], true);
+  renderQueue(); renderGroups(); render();
+  return true;
+}
+/* 分组整队入队（已在队列中则不重复追加） */
+function addGroupToQueue(gid, playNow){
+  var g = byGroup(gid);
+  if(!g) return false;
+  var ids = groupTracks(g).map(function(t){ return t.id; });
+  if(!ids.length){ toast(LANG==='en'?'This collection is empty':'这个分组是空的'); return false; }
+  var added = 0;
+  for(var i=0;i<ids.length;i++){
+    if(state.queue.indexOf(ids[i]) < 0){ state.queue.push(ids[i]); added++; }
+  }
+  LS.set('xt_queue', state.queue);
+  if(playNow){
+    playId(ids[0], true);
+  }else{
+    if(!state.queue.length || state.curId === null){
+      state.qi = 0; playId(state.queue[0], true);
+    }
+  }
+  renderQueue(); renderGroups();
+  toast(added ? (LANG==='en'?('Added '+added+' track(s) to queue'):('已加入队列 '+added+' 首'))
+              : (LANG==='en'?'Already in the queue':'这些曲目已经在队列里了'));
+  return true;
+}
+/* 按文件夹从点中的那首开始成队列 */
+function playFolderHere(gid, ev){
+  var g = byGroup(gid);
+  if(!g) return;
+  var list = groupTracks(g);
+  if(!list.length){ toast(LANG==='en'?'This collection is empty':'这个分组是空的'); return; }
+  var start = 0;
+  if(ev && ev.target && ev.target.closest){
+    var li = ev.target.closest('[data-tid]');
+    if(li && li.getAttribute('data-tid')){
+      var tid = li.getAttribute('data-tid');
+      for(var i=0;i<list.length;i++) if(list[i].id === tid){ start = i; break; }
+    }
+  }
+  var mode = g.mode || '';
+  setQueue(list.map(function(t){ return t.id; }), start,
+           { shuffle: mode==='shuffle', loop: mode==='shuffle' ? 2 : state.loop });
+}
+
+/* ================= 渲染：曲库 ================= */
+function visible(){
+  var kw = ($('q') && $('q').value || '').trim().toLowerCase();
+  var out = state.tracks.filter(function(t){
+    if(!kw) return true;
+    return String(t.name||'').toLowerCase().indexOf(kw) >= 0;
+  });
+  return out;
+}
+function applySort(){
+  var v = ($('sort') && $('sort').value) || 'added';
+  var arr = state.tracks;
+  if(v==='added') arr.sort(function(a,b){ return (b.addedAt||0)-(a.addedAt||0); });
+  else if(v==='played') arr.sort(function(a,b){ return (b.playedAt||0)-(a.playedAt||0); });
+  else if(v==='name') arr.sort(function(a,b){ return String(a.name||'').localeCompare(String(b.name||'')); });
+  else if(v==='dur') arr.sort(function(a,b){ return (b.duration||0)-(a.duration||0); });
+}
+function render(){
+  var list = $('list'); if(!list) return;
+  var arr = visible();
+  var html = '';
+  for(var i=0;i<arr.length;i++){
+    var t = arr[i];
+    var cur = (t.id === state.curId);
+    var dir = folderOf(t);
+    var playing = cur ? '<span class="tagline">'+(LANG==='en'?'playing':'播放中')+'</span>' : '';
+    html += '<li data-tid="'+esc(t.id)+'" class="'+(cur?'cur':'')+'">'
+      + '<div class="cover"><svg viewBox="0 0 24 24"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg></div>'
+      + '<div class="meta"><div class="name">'+esc(cleanName(t.name))+'</div>'
+      + '<div class="sub">'+(dir?'<span class="tagline">'+esc(dir)+'</span>':'')+'<span>'+fmt(t.duration)+'</span>'+playing+'</div>';
+    if(cur){
+      html += '<div class="bar"><i style="width:'+(seekPct())+'%"></i></div>';
+    }
+    html += '</div>'
+      + '<button class="del" data-del="'+esc(t.id)+'" aria-label="'+(LANG==='en'?'Delete':'删除')+'">&times;</button></li>';
+  }
+  list.innerHTML = html;
+  var empty = $('empty');
+  if(empty) empty.classList.toggle('hide', arr.length > 0);
+  var stat = $('stat');
+  if(stat) stat.textContent = L('libStat', state.tracks.length);
+}
+function seekPct(){
+  var a = $('audio');
+  if(!a || !a.duration || !isFinite(a.duration)) return 0;
+  return Math.max(0, Math.min(100, (a.currentTime/a.duration)*100));
+}
+
+/* ================= 渲染：分组 ================= */
+function renderGroups(){
+  var ul = $('groups'); if(!ul) return;
+  var html = '';
+  for(var i=0;i<state.groups.length;i++){
+    var g = state.groups[i];
+    var list = groupTracks(g);
+    var playing = isGroupPlaying(g);
+    var modeTxt = g.mode==='shuffle' ? (LANG==='en'?'Shuffle':'随机')
+                : (g.mode==='loop' ? (LANG==='en'?'Repeat':'循环') : '');
+    if(!list.length){
+      html += '<li data-gid="'+esc(g.id)+'"><div class="gico"><svg viewBox="0 0 24 24"><path d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2z"/></svg></div>'
+        + '<div class="meta"><div class="name">'+esc(g.name)+'</div><div class="sub"><span>'+(LANG==='en'?'empty':'空分组')+'</span></div></div>'
+        + '<button class="del" data-gdel="'+esc(g.id)+'" aria-label="'+(LANG==='en'?'Delete':'删除')+'">&times;</button></li>';
+      continue;
+    }
+    html += '<li data-gid="'+esc(g.id)+'" class="'+(playing?'playing':'')+'">'
+      + '<div class="gico"><svg viewBox="0 0 24 24"><path d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2z"/></svg></div>'
+      + '<div class="meta"><div class="name">'+esc(g.name)+'</div>'
+      + '<div class="sub"><span class="gbadge">'+list.length+' '+(LANG==='en'?'tracks':'首')+'</span>'
+      + '<span>'+fmt(groupDur(g))+'</span>'
+      + (modeTxt?'<span>'+modeTxt+'</span>':'')
+      + (playing?'<span class="tagline">'+(LANG==='en'?'playing':'播放中')+'</span>':'')
+      + '</div></div>'
+      + '<button class="del" data-gdel="'+esc(g.id)+'" aria-label="'+(LANG==='en'?'Delete':'删除')+'">&times;</button></li>';
+  }
+  ul.innerHTML = html;
+  var ge = $('gempty');
+  if(ge) ge.classList.toggle('hide', state.groups.length > 0);
+}
+
+/* ================= 渲染：队列 ================= */
+function renderQueue(){
+  var ul = $('queue'); if(!ul) return;
+  var html = '';
+  for(var i=0;i<state.queue.length;i++){
+    var t = byId(state.queue[i]);
+    if(!t) continue;
+    var cur = (i === state.qi);
+    html += '<li data-qi="'+i+'" style="display:flex;gap:9px;align-items:center;padding:9px;border-radius:9px;'
+      + 'background:var(--card2);margin-bottom:5px;border:1px solid '+(cur?'var(--acc)':'transparent')+'">'
+      + '<span class="muted" style="width:24px;font-size:.8em;text-align:right;flex:0 0 24px">'+(i+1)+'</span>'
+      + '<div class="meta"><div class="name" style="font-size:.87em">'+esc(cleanName(t.name))+'</div>'
+      + '<div class="sub">'+fmt(t.duration)+'</div></div></li>';
+  }
+  ul.innerHTML = html || '<li class="qempty">'+esc(L('qEmpty'))+'</li>';
+  var qi = $('qinfo');
+  if(qi) qi.textContent = state.queue.length ? (state.queue.length + ' ' + (LANG==='en'?'tracks':'首')) : '';
+  var qn = $('qnow');
+  if(qn){
+    var cur = byId(state.curId);
+    if(cur){
+      qn.innerHTML = '<div class="nowbox"><div class="name" style="font-size:.9em">'
+        + (LANG==='en'?'Now: ':'现在：') + esc(cleanName(cur.name)) + '</div>'
+        + '<div class="sub"><span>'+(LANG==='en'?'#'+(state.qi+1)+' of '+state.queue.length:'第 '+(state.qi+1)+' / '+state.queue.length+' 首')+'</span></div></div>';
+    }else{
+      qn.innerHTML = '';
+    }
+  }
+}
+
+/* ================= 视图切换 ================= */
+function setView(v){
+  ['lib','play','more','doc'].forEach(function(k){
+    var el = $('v-' + k);
+    if(el) el.classList.toggle('hide', k !== v);
+  });
+  var tabs = $('tabs');
+  if(tabs){
+    Array.prototype.forEach.call(tabs.querySelectorAll('button'), function(b){
+      var on = b.getAttribute('data-v') === v;
+      b.classList.toggle('on', on);
+    });
+  }
+  if(v === 'doc') renderDoc(curDoc);
+  var tt = $('toTop');
+  if(tt) tt.classList.toggle('hide', v !== 'doc');
+  try{ window.scrollTo(0,0); }catch(e){}
+}
+function setListMode(m){
+  state.listMode = m;
+  var mf = $('modeFiles'), mfo = $('modeFolder');
+  if(mf) mf.classList.toggle('hide', m !== 'files');
+  if(mfo) mfo.classList.toggle('hide', m !== 'folder');
+  var seg = document.querySelectorAll('.seg[role="tablist"]');
+  var wrap = $('modeFiles') && $('modeFiles').previousElementSibling;
+  if(wrap && wrap.className && wrap.className.indexOf('seg') >= 0){
+    Array.prototype.forEach.call(wrap.querySelectorAll('button'), function(b){
+      b.classList.toggle('on', b.getAttribute('data-mode') === m);
+    });
+  }
+  LS.set('xt_listmode', m);
+}
+
+/* ================= 均衡器 ================= */
+var EQ_BANDS = [31,62,125,250,500,1000,2000,4000,8000,16000];
+var EQ_PRESETS = [
+  { id:'flat',   zh:'原声', en:'Flat',    gains:[0,0,0,0,0,0,0,0,0,0] },
+  { id:'pop',    zh:'流行', en:'Pop',     gains:[-1,0,2,4,4,2,0,-1,-1,-2] },
+  { id:'rock',   zh:'摇滚', en:'Rock',    gains:[5,4,2,-1,-2,0,2,4,5,5] },
+  { id:'jazz',   zh:'爵士', en:'Jazz',    gains:[3,2,1,2,-1,-1,0,1,2,3] },
+  { id:'class',  zh:'古典', en:'Classical',gains:[4,3,2,1,-1,-1,0,2,3,4] },
+  { id:'vocal',  zh:'人声', en:'Vocal',   gains:[-2,-1,0,2,4,4,3,2,1,0] },
+  { id:'bass',   zh:'低音增强', en:'Bass boost', gains:[7,6,5,3,1,0,0,0,0,0] },
+  { id:'treble', zh:'高音增强', en:'Treble boost', gains:[0,0,0,0,0,1,3,5,6,7] },
+  { id:'sleep',  zh:'助眠柔化', en:'Sleep soft', gains:[-3,-2,-1,0,1,1,0,-1,-3,-5] }
+];
+function defaultEq(){
+  return { on:false, preset:'flat', gains:[0,0,0,0,0,0,0,0,0,0], bass:0, loud:false };
+}
+function loadEq(){
+  var e = LS.get('xt_eq', null);
+  if(!e || !e.gains || e.gains.length !== 10) e = defaultEq();
+  if(typeof e.bass !== 'number') e.bass = 0;
+  return e;
+}
+function eqBassNode(){ return 60; } /* 低音增强中心频率 */
+/* 建立 Web Audio 图：source -> eq[0..9] -> bassShelf -> gain -> destination */
+function ensureAudioGraph(){
+  if(state.audioCtx) return state.audioCtx;
+  var AC = window.AudioContext || window.webkitAudioContext;
+  if(!AC) return null;
+  try{
+    var ctx = new AC();
+    var src = ctx.createMediaElementSource($('audio'));
+    var nodes = [];
+    var prev = src;
+    for(var i=0;i<EQ_BANDS.length;i++){
+      var f = ctx.createBiquadFilter();
+      f.type = (i===0) ? 'lowshelf' : (i===EQ_BANDS.length-1 ? 'highshelf' : 'peaking');
+      f.frequency.value = EQ_BANDS[i];
+      f.Q.value = 1.0;
+      f.gain.value = 0;
+      prev.connect(f); prev = f; nodes.push(f);
+    }
+    var bass = ctx.createBiquadFilter();
+    bass.type = 'peaking'; bass.frequency.value = 80; bass.Q.value = 0.8; bass.gain.value = 0;
+    prev.connect(bass); prev = bass;
+    var gain = ctx.createGain();
+    gain.gain.value = 1;
+    prev.connect(gain); gain.connect(ctx.destination);
+    state.audioCtx = ctx; state.eqNodes = nodes; state.bassNode = bass; state.gain = gain;
+    return ctx;
+  }catch(e){
+    console.log('[XianTuner] audio graph unavailable:', e);
+    return null;
+  }
+}
+function applyEq(){
+  var e = state.eq;
+  if(!e) return;
+  var ctx = ensureAudioGraph();
+  if(!ctx || !state.eqNodes){
+    // 没有 Web Audio 时退回原生 playbackRate 之外的音量控制
+    return;
+  }
+  for(var i=0;i<state.eqNodes.length;i++){
+    var g = e.on ? (e.gains[i]||0) : 0;
+    try{ state.eqNodes[i].gain.setTargetAtTime(g, ctx.currentTime, 0.03); }catch(err){ state.eqNodes[i].gain.value = g; }
+  }
+  if(state.bassNode){
+    var bg = e.on ? (e.bass||0) : 0;
+    try{ state.bassNode.gain.setTargetAtTime(bg, ctx.currentTime, 0.03); }catch(err){ state.bassNode.gain.value = bg; }
+  }
+  if(state.gain && !state.fadeTimer){
+    var lv = (e.on && e.loud) ? 1.18 : 1.0;
+    try{ state.gain.gain.setTargetAtTime(lv, ctx.currentTime, 0.05); }catch(err){ state.gain.gain.value = lv; }
+  }
+  LS.set('xt_eq', e);
+}
+function setEqPreset(id){
+  var p = null;
+  for(var i=0;i<EQ_PRESETS.length;i++) if(EQ_PRESETS[i].id === id) p = EQ_PRESETS[i];
+  if(!p) return;
+  state.eq.on = true;
+  state.eq.preset = id;
+  state.eq.gains = p.gains.slice();
+  applyEq(); drawEqCurve(); renderEqQuick();
+  toast((LANG==='en'?'EQ: ':'均衡器：') + (LANG==='en'?p.en:p.zh));
+}
+function setEqBand(i, v){
+  state.eq.on = true;
+  state.eq.preset = 'custom';
+  state.eq.gains[i] = parseFloat(v)||0;
+  applyEq(); drawEqCurve(); renderEqQuick();
+}
+function drawEqCurve(){
+  var cv = $('eqCurve'); if(!cv || !cv.getContext) return;
+  var ctx = null;
+  try{ ctx = cv.getContext('2d'); }catch(e){ ctx = null; }
+  if(!ctx) return;
+  var W = cv.width = cv.clientWidth || 320; if(!W) W = cv.width = 320;
+  var H = cv.height = 66;
+  var cs = getComputedStyle(document.documentElement);
+  var line = (cs.getPropertyValue('--line')||'#3A3D43').trim();
+  var acc  = (cs.getPropertyValue('--acc')||'#4A9EFF').trim();
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle = line; ctx.lineWidth = 1;
+  for(var k=1;k<4;k++){
+    var y = Math.round(H*k/4)+.5;
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+  }
+  var gains = (state.eq && state.eq.on) ? state.eq.gains : [0,0,0,0,0,0,0,0,0,0];
+  var n = gains.length, pts = [];
+  for(var i=0;i<n;i++){
+    var x = (W * i) / (n-1);
+    var y2 = H/2 - (Math.max(-12, Math.min(12, gains[i]))/12) * (H/2 - 5);
+    pts.push([x,y2]);
+  }
+  ctx.strokeStyle = acc; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+  for(var j=1;j<pts.length;j++){
+    var p0 = pts[j-1], p1 = pts[j], mx = (p0[0]+p1[0])/2;
+    ctx.bezierCurveTo(mx, p0[1], mx, p1[1], p1[0], p1[1]);
+  }
+  ctx.stroke();
+  ctx.fillStyle = acc;
+  for(var m=0;m<pts.length;m++){
+    ctx.beginPath(); ctx.arc(pts[m][0], pts[m][1], 2.2, 0, Math.PI*2); ctx.fill();
+  }
+}
+function renderEqQuick(){
+  var box = $('eqQuick'); if(!box) return;
+  var html = '';
+  for(var i=0;i<EQ_PRESETS.length;i++){
+    var p = EQ_PRESETS[i];
+    var on = state.eq && state.eq.on && state.eq.preset === p.id;
+    html += '<button data-eqp="'+p.id+'" class="'+(on?'on':'')+'">'+esc(LANG==='en'?p.en:p.zh)+'</button>';
+  }
+  box.innerHTML = html;
+}
+
+/* ================= 淡入淡出 ================= */
+function fadeTo(target, sec, thenPause){
+  var ctx = state.audioCtx;
+  var a = $('audio');
+  if(!ctx || !state.gain || !state.fade){
+    if(thenPause) a.pause();
+    return;
+  }
+  sec = sec || 0.28;
+  state.fadeTimer = true;
+  var g = state.gain.gain;
+  var now = ctx.currentTime;
+  try{
+    g.cancelScheduledValues(now);
+    g.setValueAtTime(g.value, now);
+    g.linearRampToValueAtTime(Math.max(0.0001, target), now + sec);
+  }catch(e){
+    try{ g.value = target; }catch(e2){}
+  }
+  setTimeout(function(){
+    state.fadeTimer = false;
+    if(thenPause){ try{ a.pause(); }catch(e){} }
+    try{ g.value = 1; }catch(e){}
+  }, Math.round(sec*1000) + 30);
+}
+
+/* ================= 播放控制 ================= */
+function trackBlob(t){
+  return getBlob(t.id).then(function(b){
+    if(!b) throw new Error(LANG==='en'?'Audio data missing for this track':'这首歌的音频数据不见了');
+    return b;
+  });
+}
+function releaseUrl(){
+  if(state.curUrl){
+    try{ URL.revokeObjectURL(state.curUrl); }catch(e){}
+    state.curUrl = null;
+  }
+}
+function playId(id, fromStart){
+  var t = byId(id);
+  if(!t){ toast(LANG==='en'?'Track not found':'找不到这首歌'); return; }
+  var a = $('audio');
+  savePos(true);
+  state.curId = id;
+  for(var i=0;i<state.queue.length;i++) if(state.queue[i]===id){ state.qi = i; break; }
+  LS.set('xt_last', id);
+  releaseUrl();
+  trackBlob(t).then(function(blob){
+    state.curUrl = URL.createObjectURL(blob);
+    a.src = state.curUrl;
+    if(fromStart){ try{ a.currentTime = 0; }catch(e){} }
+    else if(state.tracks.length && LS.get('xt_resume', true) && t.lastPos > 3 && t.lastPos < (t.duration||1e9) - 5){
+      try{ a.currentTime = t.lastPos; }catch(e){}
+    }
+    return a.play();
+  }).then(function(){
+    t.playedAt = Date.now();
+    saveMeta(t);
+    afterPlayStarted();
+  })["catch"](function(e){
+    var msg = String((e && e.message) || e);
+    if(msg.indexOf('NotAllowed') >= 0 || msg.indexOf('interact') >= 0){
+      toast(LANG==='en'?'Tap play to start (browser autoplay policy)':'点一下播放按钮开始（浏览器限制自动播放）');
+      updateNow();
+      return;
+    }
+    errBox(L('qTitle'), msg);
+  });
+  updateNow(); render(); renderGroups(); renderQueue();
+  renderMini();
+}
+function afterPlayStarted(){
+  updateNow();
+  playingVisual(true);
+  setMS();
+  renderMini();
+  // 首次交互后建音频图，避免 iOS 上 AudioContext 处于 suspended
+  var ctx = ensureAudioGraph();
+  if(ctx && ctx.state === 'suspended'){ try{ ctx.resume(); }catch(e){} }
+  if(state.eq) applyEq();
+}
+function togglePlay(){
+  var a = $('audio');
+  if(!state.curId){
+    if(state.queue.length || state.tracks.length){
+      var first = state.queue.length ? state.queue[0] : state.tracks[0].id;
+      playId(first, true);
+    }else{
+      toast(LANG==='en'?'Library is empty — add some audio first':'曲库是空的，先添加音频');
+    }
+    return;
+  }
+  if(a.paused){
+    var ctx = ensureAudioGraph();
+    if(ctx && ctx.state === 'suspended'){ try{ ctx.resume(); }catch(e){} }
+    if(state.fade && state.gain && ctx){
+      try{ state.gain.gain.setValueAtTime(0.0001, ctx.currentTime); }catch(e){}
+      a.play().then(function(){ fadeTo(1, 0.28, false); playingVisual(true); setMS(); });
+    }else{
+      a.play().then(function(){ playingVisual(true); setMS(); });
+    }
+  }else{
+    if(state.fade && state.gain && state.audioCtx){
+      fadeTo(0.0001, 0.26, true);
+    }else{
+      a.pause();
+    }
+    playingVisual(false);
+  }
+  updateNow(); renderMini();
+}
+function playingVisual(on){
+  var ic = $('icPlay'), mic = $('micPlay');
+  var pauseD = 'M6 5h4v14H6zM14 5h4v14h-4z', playD = 'M8 5v14l11-7z';
+  if(ic) ic.innerHTML = '<path d="'+(on?pauseD:playD)+'"/>';
+  if(mic) mic.innerHTML = '<path d="'+(on?pauseD:playD)+'"/>';
+}
+function nextTrack(auto){
+  if(!state.queue.length) return;
+  if(state.shuffle){
+    if(state.queue.length === 1){ playId(state.queue[0], true); return; }
+    var n = state.qi;
+    for(var guard=0; guard<40 && n===state.qi; guard++){
+      n = Math.floor(Math.random()*state.queue.length);
+    }
+    playId(state.queue[n], true);
+    return;
+  }
+  if(state.qi < state.queue.length - 1){
+    playId(state.queue[state.qi+1], true);
+  }else if(state.loop === 2){
+    playId(state.queue[0], true);
+  }else{
+    if(auto){ playingVisual(false); updateNow(); renderMini(); }
+    else toast(LANG==='en'?'End of queue':'已经是队列最后一首了');
+  }
+}
+function prevTrack(){
+  var a = $('audio');
+  if(a && a.currentTime > 3 && !state.shuffle){
+    try{ a.currentTime = 0; }catch(e){}
+    return;
+  }
+  if(!state.queue.length) return;
+  if(state.shuffle){
+    var n = Math.floor(Math.random()*state.queue.length);
+    playId(state.queue[n], true);
+    return;
+  }
+  if(state.qi > 0){ playId(state.queue[state.qi-1], true); }
+  else if(state.loop === 2){ playId(state.queue[state.queue.length-1], true); }
+  else { try{ a.currentTime = 0; }catch(e){} }
+}
+function seekBy(sec){
+  var a = $('audio');
+  if(!a || !state.curId) return;
+  try{
+    a.currentTime = Math.max(0, Math.min((a.duration||0), a.currentTime + sec));
+  }catch(e){}
+}
+function setLoop(v){
+  state.loop = v; LS.set('xt_loop', v);
+  syncChips();
+}
+function cycleLoop(){
+  state.loop = (state.loop + 1) % 3;
+  LS.set('xt_loop', state.loop);
+  syncChips();
+  toast(state.loop===0 ? L('chipLoopOff') : state.loop===1 ? L('chipLoopOne') : L('chipLoopAll'));
+}
+function cycleShuffle(){
+  state.shuffle = !state.shuffle;
+  LS.set('xt_shuffle', state.shuffle);
+  syncChips();
+  toast(state.shuffle ? L('chipShufOn') : L('chipShufOff'));
+}
+function syncChips(){
+  var cl = $('cLoop'), cs = $('cShuffle');
+  if(cl){
+    cl.textContent = state.loop===1 ? L('chipLoopOne') : (state.loop===2 ? L('chipLoopAll') : L('chipLoopOff'));
+    cl.classList.toggle('on', state.loop !== 0);
+  }
+  if(cs){
+    cs.textContent = state.shuffle ? L('chipShufOn') : L('chipShufOff');
+    cs.classList.toggle('on', state.shuffle);
+  }
+}
+var SPEEDS = [0.8, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0];
+function cycleSpeed(){
+  var a = $('audio');
+  var cur = a ? (a.playbackRate || 1) : 1;
+  var idx = 0;
+  for(var i=0;i<SPEEDS.length;i++) if(Math.abs(SPEEDS[i]-cur) < 0.01) idx = i;
+  var nxt = SPEEDS[(idx+1) % SPEEDS.length];
+  if(a) a.playbackRate = nxt;
+  LS.set('xt_speed', nxt);
+  var c = $('cSpeed');
+  if(c) c.textContent = nxt.toFixed(nxt % 1 ? 2 : 1).replace(/0$/,'') + 'x';
+  if(c) c.classList.toggle('on', Math.abs(nxt-1) > 0.01);
+}
+
+/* ================= 睡眠定时 ================= */
+function askSleep(){
+  var opts = [15,30,45,60,90,120];
+  var html = '<p class="muted">'+(LANG==='en'?'Playback stops automatically when time is up.':'时间到自动暂停播放。')+'</p><div class="row">';
+  for(var i=0;i<opts.length;i++){
+    html += '<button class="btn" data-sleep="'+opts[i]+'">'+opts[i]+' '+(LANG==='en'?'min':'分钟')+'</button>';
+  }
+  html += '</div>';
+  if(state.sleepEnd){
+    html += '<hr><button class="btn warn full" data-sleep="0">'+(LANG==='en'?'Cancel sleep timer':'取消睡眠定时')+'</button>';
+  }
+  sheet(L('chipSleep'), html);
+}
+function setSleep(min){
+  if(state.sleepTimer){ clearInterval(state.sleepTimer); state.sleepTimer = null; }
+  if(!min){
+    state.sleepEnd = 0;
+    var c0 = $('cSleep'); if(c0){ c0.textContent = L('chipSleep'); c0.classList.remove('on'); }
+    closeSheet(); toast(LANG==='en'?'Sleep timer cancelled':'已取消睡眠定时');
+    return;
+  }
+  state.sleepEnd = Date.now() + min*60000;
+  var c = $('cSleep'); if(c) c.classList.add('on');
+  state.sleepTimer = setInterval(function(){
+    var left = state.sleepEnd - Date.now();
+    var cc = $('cSleep');
+    if(left <= 0){
+      clearInterval(state.sleepTimer); state.sleepTimer = null; state.sleepEnd = 0;
+      if(cc){ cc.textContent = L('chipSleep'); cc.classList.remove('on'); }
+      var a = $('audio');
+      if(a && !a.paused){ if(state.fade && state.gain && state.audioCtx) fadeTo(0.0001, 0.9, true); else a.pause(); }
+      playingVisual(false);
+      toast(LANG==='en'?'Sleep timer finished — paused':'睡眠定时到，已暂停');
+      return;
+    }
+    if(cc){
+      var m = Math.ceil(left/60000);
+      cc.textContent = (LANG==='en'?'Sleep ':'睡眠 ') + m + (LANG==='en'?'m':'分');
+      cc.classList.add('on');
+    }
+  }, 1000);
+  closeSheet();
+  toast((LANG==='en'?'Sleep timer: ':'睡眠定时：') + min + (LANG==='en'?' min':' 分钟'));
+}
+
+/* ================= Media Session ================= */
+function setMS(){
+  if(!('mediaSession' in navigator)) return;
+  var t = byId(state.curId);
+  if(!t) return;
+  try{
+    navigator.mediaSession.metadata = new window.MediaMetadata({
+      title: cleanName(t.name),
+      artist: folderOf(t),
+      album: 'XianTuner',
+      artwork: []
+    });
+    navigator.mediaSession.setActionHandler('play', function(){ togglePlay(); });
+    navigator.mediaSession.setActionHandler('pause', function(){ togglePlay(); });
+    navigator.mediaSession.setActionHandler('previoustrack', function(){ prevTrack(); });
+    navigator.mediaSession.setActionHandler('nexttrack', function(){ nextTrack(false); });
+    try{ navigator.mediaSession.setActionHandler('seekbackward', function(){ seekBy(-15); }); }catch(e){}
+    try{ navigator.mediaSession.setActionHandler('seekforward', function(){ seekBy(30); }); }catch(e){}
+  }catch(e){}
+}
+
+/* ================= 位置记忆 ================= */
+function saveMeta(t){
+  if(!t) return;
+  if(!state.dbOk){ persistFallback(); return; }
+  idb('readwrite', function(st){
+    st.put({ id:t.id, name:t.name, size:t.size, type:t.type, addedAt:t.addedAt,
+             lastPos:t.lastPos||0, duration:t.duration||0, playedAt:t.playedAt||0, dir:t.dir||'' });
+  }, STORE)["catch"](function(){ persistFallback(); });
+}
+function savePos(force){
+  var a = $('audio'), t = byId(state.curId);
+  if(!a || !t) return;
+  if(!LS.get('xt_resume', true)) return;
+  if(!force && !state.lastSave) state.lastSave = 0;
+  var now = Date.now();
+  if(!force && now - (state.lastSave||0) < 4000) return;
+  state.lastSave = now;
+  t.lastPos = a.currentTime; t.duration = a.duration || t.duration;
+  saveMeta(t);
+}
+function persistFallback(){
+  LS.set('xt_fallback', state.tracks.slice(0, 200));
+}
+function updateNow(){
+  var t = byId(state.curId);
+  var pt = $('ptitle'), ps = $('psub');
+  if(pt) pt.textContent = t ? cleanName(t.name) : L('nowPlaying');
+  if(ps) ps.textContent = t ? folderOf(t) : L('pickOne');
+  var a = $('audio');
+  var tc = $('tcur'), td = $('tdur');
+  if(tc && a) tc.textContent = fmt(a.currentTime);
+  if(td && a) td.textContent = fmt(a.duration || (t && t.duration) || 0);
+  var sk = $('seek');
+  if(sk && a && a.duration && !state.seekDrag){
+    sk.value = String(Math.round((a.currentTime/a.duration)*1000));
+  }
+  renderMini();
+}
+function renderMini(){
+  var t = byId(state.curId);
+  var m = $('mini');
+  if(!m) return;
+  m.classList.toggle('hide', !t);
+  var mn = $('mname'), ms = $('msub');
+  if(t){
+    if(mn) mn.textContent = cleanName(t.name);
+    var a = $('audio');
+    if(ms){
+      ms.textContent = folderOf(t) + (a && a.duration ? '  ·  ' + fmt(a.currentTime) + ' / ' + fmt(a.duration) : '');
+    }
+  }
+  var mp = $('mprog');
+  if(mp && mp.firstElementChild){
+    var a2 = $('audio');
+    var pct = (a2 && a2.duration && isFinite(a2.duration)) ? (a2.currentTime/a2.duration)*100 : 0;
+    mp.firstElementChild.style.width = Math.max(0, Math.min(100, pct)) + '%';
+  }
+}
+function releaseLast(){ restoreLast(); }
+var _lastId = null;
+function restoreLast(){
+  var id = state.lastRestoreId = LS.get('xt_last', null);
+  if(id && byId(id)){ state.curId = id; updateNow(); }
+  var sp = LS.get('xt_speed', 1);
+  var a = $('audio');
+  if(a){ a.playbackRate = sp || 1; }
+  _lastId = id;
+}
+
+/* ================= 导入 ================= */
+function handleFiles(files, label){
+  if(!files || !files.length) return;
+  var keep = LS.get('xt_keep', true);
+  var list = Array.prototype.slice.call(files).filter(function(f){
+    if(!f) return false;
+    if(f.type && f.type.indexOf('audio') === 0) return true;
+    return /\.(mp3|m4a|flac|ogg|oga|wav|aac|opus|weba|mp4)$/i.test(f.name || '');
+  });
+  if(!list.length){ toast(LANG==='en'?'No audio files found':'没找到音频文件'); return; }
+  toast(L('importing'));
+  var dirs = {};
+  var done = 0, okCount = 0;
+  list.forEach(function(f){
+    var d = guessDir(f);
+    if(d){
+      if(!dirs[d]) dirs[d] = [];
+    }
+    var id = 't' + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+    var rec = { id:id, name:f.name, size:f.size, type:f.type||'audio/mpeg',
+                addedAt:Date.now(), lastPos:0, duration:0, playedAt:0, dir:d };
+    var p = keep ? putBlob(id, f).then(function(){ return true; })["catch"](function(){ return false; })
+                 : Promise.resolve(false);
+    p.then(function(stored){
+      if(keep && !stored) return null;
+      if(!keep){
+        // 不落盘：只在内存里挂 blob，刷新即失效
+        state.memBlobs = state.memBlobs || {};
+        state.memBlobs[id] = f;
+      }
+      state.tracks.unshift(rec);
+      if(d) dirs[d].push(id);
+      okCount++;
+      return state.dbOk ? idb('readwrite', function(st){ st.put(rec); }, STORE)["catch"](function(){}) : null;
+    }).then(function(){
+      done++;
+      if(done === list.length) finishImport(dirs, okCount);
+    });
+  });
+}
+function finishImport(dirs, okCount){
+  // 按导入的文件夹名自动建分组
+  Object.keys(dirs).forEach(function(name){
+    var ids = dirs[name];
+    if(!ids.length) return;
+    var g = byGroupExists(name);
+    if(g){
+      ids.forEach(function(id){ if(g.trackIds.indexOf(id) < 0) g.trackIds.push(id); });
+      putGroup(g);
+    }else{
+      var ng = { id:'g' + Date.now().toString(36) + Math.random().toString(36).slice(2,5),
+                 name:name, trackIds:ids, createdAt:Date.now(), mode:'', look:'folder' };
+      state.groups.unshift(ng);
+      putGroup(ng);
+    }
+  });
+  applySort(); render(); renderGroups(); persistFallback();
+  toast(L('imported', okCount));
+}
+
+/* ================= 删除 ================= */
+function removeTrack(id){
+  var i;
+  for(i=0;i<state.tracks.length;i++){
+    if(state.tracks[i].id === id){ state.tracks.splice(i,1); break; }
+  }
+  for(i=0;i<state.groups.length;i++){
+    var g = state.groups[i];
+    var k = g.trackIds.indexOf(id);
+    if(k >= 0){ g.trackIds.splice(k,1); putGroup(g); }
+  }
+  var wasCur = (state.curId === id);
+  var qi = state.queue.indexOf(id);
+  if(qi >= 0){
+    state.queue.splice(qi,1);
+    if(qi < state.qi) state.qi--;
+    if(qi === state.qi && state.qi >= state.queue.length) state.qi = Math.max(0, state.queue.length-1);
+    LS.set('xt_queue', state.queue);
+  }
+  if(state.memBlobs) delete state.memBlobs[id];
+  delBlob(id);
+  if(state.dbOk) idb('readwrite', function(st){ st["delete"](id); }, STORE)["catch"](function(){});
+  if(wasCur){
+    var a = $('audio');
+    if(a){ try{ a.pause(); }catch(e){} a.removeAttribute('src'); }
+    releaseUrl();
+    state.curId = null;
+    playingVisual(false);
+    if(state.queue.length){
+      playId(state.queue[Math.min(state.qi, state.queue.length-1)], true);
+    }else{
+      updateNow();
+    }
+  }
+  render(); renderGroups(); renderQueue(); renderMini();
+  toast(L('deleted'));
+}
+function delAllGroups(){
+  if(!state.groups.length) return;
+  state.groups.slice().forEach(function(g){ delGroup(g.id); });
+  state.groups = [];
+  renderGroups();
+}
+
+/* ================= 导出 / 导入清单 ================= */
+function exportList(){
+  var data = {
+    app:'XianTuner', v:2, exportedAt:new Date().toISOString(),
+    note:'Only metadata (names/durations/positions). Audio files are NOT included.',
+    tracks: state.tracks.map(function(t){
+      return { name:t.name, size:t.size, type:t.type, addedAt:t.addedAt,
+               lastPos:t.lastPos, duration:t.duration, playedAt:t.playedAt, dir:t.dir || '' };
+    }),
+    groups: state.groups.map(function(g){
+      return { name:g.name, mode:g.mode||'', look:g.look||'',
+               trackNames: groupTracks(g).map(function(t){ return t.name; }) };
+    }),
+    settings: { theme:state.theme, lang:state.lang, zoom:state.zoom, contrast:state.contrast,
+                bigTap:state.bigTap, reduceMotion:state.reduceMotion, fade:state.fade,
+                focus:state.focus, focusPause:state.focusPause, eq:state.eq }
+  };
+  var txt = JSON.stringify(data, null, 2);
+  var html = '<p class="muted">'+(LANG==='en'
+      ? 'Copy this JSON and keep it safe. Paste it in "Import list" on a new device.'
+      : '把这串 JSON 复制保存好，换设备时在「导入清单」里粘回来。')+'</p>'
+    + '<textarea rows="10" id="expTa" style="width:100%">'+esc(txt)+'</textarea>';
+  sheet(LANG==='en'?'Export list':'导出清单', html);
+  setTimeout(function(){
+    var ta = $('expTa');
+    if(ta){
+      ta.focus(); ta.select();
+      try{ document.execCommand('copy'); toast(L('copied')); }catch(e){}
+    }
+  }, 60);
+}
+function importList(){
+  var html = '<p class="muted">'+(LANG==='en'
+      ? 'Paste the JSON exported earlier. Names/durations/positions/settings are restored. It will NOT restore audio data — you will need to re-import the audio files themselves.'
+      : '粘贴之前导出的 JSON。曲名、时长、播放位置和各项设置会恢复。它<b>不包含音频数据</b>，音频文件需要重新导入一次。')+'</p>'
+    + '<textarea rows="8" id="impTa" style="width:100%" placeholder="JSON…"></textarea>'
+    + '<button class="btn primary full" id="impGo" style="margin-top:10px">'+(LANG==='en'?'Import':'导入')+'</button>';
+  sheet(LANG==='en'?'Import list':'导入清单', html);
+}
+function doImport(){
+  var ta = $('impTa');
+  if(!ta || !ta.value.trim()){ toast(LANG==='en'?'Nothing to import':'没有可导入的内容'); return; }
+  var data;
+  try{ data = JSON.parse(ta.value); }
+  catch(e){ errBox(LANG==='en'?'Not valid JSON':'不是合法的 JSON', String(e && e.message || e)); return; }
+  if(!data || !data.tracks){ errBox(LANG==='en'?'Unrecognised format':'无法识别的格式'); return; }
+  var byName = {};
+  data.tracks.forEach(function(r){
+    var old = byName[r.name];
+    if(old){ old.lastPos = r.lastPos||0; old.duration = r.duration||old.duration; return; }
+    var rec = { id:'t' + Date.now().toString(36) + Math.random().toString(36).slice(2,7),
+                name:r.name, size:r.size||0, type:r.type||'audio/mpeg',
+                addedAt:r.addedAt||Date.now(), lastPos:r.lastPos||0,
+                duration:r.duration||0, playedAt:r.playedAt||0, dir:r.dir||'' };
+    state.tracks.push(rec);
+    byName[r.name] = rec;
+    if(state.dbOk) idb('readwrite', function(st){ st.put(rec); }, STORE)["catch"](function(){});
+  });
+  (data.groups||[]).forEach(function(g){
+    var ids = (g.trackNames||[]).map(function(n){ return byName[n] ? byName[n].id : null; })
+                                 .filter(function(x){ return !!x; });
+    if(!ids.length) return;
+    var ex = byGroupExists(g.name);
+    if(ex){ ids.forEach(function(id){ if(ex.trackIds.indexOf(id)<0) ex.trackIds.push(id); }); putGroup(ex); }
+    else{
+      var ng = { id:'g'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
+                 name:g.name, trackIds:ids, createdAt:Date.now(), mode:g.mode||'', look:g.look||'folder' };
+      state.groups.push(ng); putGroup(ng);
+    }
+  });
+  if(data.settings) applySettings(data.settings);
+  state.queue = state.tracks.map(function(t){ return t.id; });
+  LS.set('xt_queue', state.queue);
+  applySort(); render(); renderGroups(); renderQueue(); persistFallback();
+  closeSheet();
+  toast(LANG==='en'?'List imported':'清单已导入');
+}
+function applySettings(s){
+  if(!s) return;
+  if(s.theme) { state.theme = s.theme; LS.set('xt_theme', s.theme); }
+  if(s.lang)  { state.lang  = s.lang;  LS.set('xt_lang', s.lang); }
+  if(typeof s.zoom === 'number'){ state.zoom = s.zoom; LS.set('xt_zoom', s.zoom); }
+  if(typeof s.contrast === 'boolean'){ state.contrast = s.contrast; LS.set('xt_contrast', s.contrast); }
+  if(typeof s.bigTap === 'boolean'){ state.bigTap = s.bigTap; LS.set('xt_bigtap', s.bigTap); }
+  if(typeof s.reduceMotion === 'boolean'){ state.reduceMotion = s.reduceMotion; LS.set('xt_motion', s.reduceMotion); }
+  if(typeof s.fade === 'boolean'){ state.fade = s.fade; LS.set('xt_fade', s.fade); }
+  if(typeof s.focus === 'boolean'){ state.focus = s.focus; LS.set('xt_focus', s.focus); }
+  if(typeof s.focusPause === 'boolean'){ state.focusPause = s.focusPause; LS.set('xt_focuspause', s.focusPause); }
+  if(s.eq && s.eq.gains){ state.eq = s.eq; LS.set('xt_eq', s.eq); }
+  LANG = pickLang(state.lang);
+  applyTheme(); applyA11y(); fillLabels(); syncChips(); renderEqQuick();
+}
+
+/* ================= 文档内容（双语） ================= */
+var DOCS = {
+  zh: {
+    help: function(){
+      return ''
+      + '<div class="card"><h2>三步上手</h2>'
+      + '<ol>'
+      + '<li><b>添加音频</b> —— 挑单个或几个文件；或点 <b>添加文件夹</b> 一次导入整个目录（推荐）。</li>'
+      + '<li>导入完成后，每个文件夹会<b>自动生成一个同名分组</b>，不用手动归类。</li>'
+      + '<li>到「按文件夹」视图点那个分组就能播。<b>随机 + 列表循环</b> 就是整夜不重样的效果。</li>'
+      + '</ol></div>'
+
+      + '<div class="card"><h2>整夜循环一个文件夹（最常用）</h2>'
+      + '<ul>'
+      + '<li>把「火车声音」这类音频放进手机里一个文件夹（例如 <code>Music/火车声音</code>）。</li>'
+      + '<li>曲库页点 <b>添加文件夹</b> → 选中它 → 全部导入并自动建分组。</li>'
+      + '<li>切到 <b>按文件夹</b> 视图，点这个分组 → 弹出菜单里选 <b>随机播放</b>。</li>'
+      + '<li>队列就是这一个文件夹的全部曲目。想更保险，再点播放页的「循环」切到 <b>列表循环</b>。</li>'
+      + '<li>点 <b>睡眠定时</b> 设 60~120 分钟，到点会淡出并自动暂停。</li>'
+      + '</ul>'
+      + '<p class="muted">注意：「循环关」在最后一首播完就停，整夜连续务必让循环处于<b>列表循环</b>或<b>单曲循环</b>。</p>'
+      + '</div>'
+
+      + '<div class="card"><h2>播放方式记在分组上</h2>'
+      + '<ul>'
+      + '<li>分组详情里可以把「循环 / 随机」写进这个分组，下次点它直接按这个方式播。</li>'
+      + '<li>分组详情还支持：加曲目、改名、去重、删除（只取消归类，不删音频）。</li>'
+      + '<li>手动建分组：曲库页 <b>新建分组</b> → 起名 → 勾选曲目（可全选）→ 加入。</li>'
+      + '</ul></div>'
+
+      + '<div class="card"><h2>队列（OPLAYER 那种播放列表）</h2>'
+      + '<ul>'
+      + '<li>播放页的「当前播放队列」就是要播的顺序，点任意一行从那里开始播。</li>'
+      + '<li><b>把分组加进队列</b>：把几个文件夹的曲目合并成一条长队列（例如几段火车声接白噪音）。</li>'
+      + '<li>队列会自动记住，关掉浏览器再打开还在。</li>'
+      + '</ul></div>'
+
+      + '<div class="card"><h2>长音频与音质</h2>'
+      + '<ul>'
+      + '<li>每首的播放位置自动记住，下次点同一首接着上次听（可在设置里关掉）。</li>'
+      + '<li>队列里切歌一定从头播，不会又跳到上次位置。</li>'
+      + '<li>倍速 0.8x ~ 3.0x（点播放页的倍速按钮循环切换）。</li>'
+      + '<li>前进 30 秒 / 后退 15 秒按钮，适合听播客跳过片头。</li>'
+      + '<li>锁屏与通知栏可控制（需浏览器支持 Media Session）。</li>'
+      + '</ul></div>'
+
+      + '<div class="card"><h2>均衡器</h2>'
+      + '<ul>'
+      + '<li>设置页 → 均衡器 → 打开。10 段频段（31Hz ~ 16kHz）可逐段拖动。</li>'
+      + '<li>快捷预设：原声、流行、摇滚、爵士、古典、人声、低音增强、高音增强、助眠柔化。</li>'
+      + '<li>另有 <b>低音增强</b> 与 <b>响度补偿</b> 两个总控开关。</li>'
+      + '<li>设置立即生效并自动记住；「全部归零」一键回到原声。</li>'
+      + '<li class="muted">均衡器依赖浏览器的 Web Audio 能力，个别老旧浏览器可能不生效（此时播放不受影响）。</li>'
+      + '</ul></div>'
+
+      + '<div class="card"><h2>外观与无障碍</h2>'
+      + '<ul>'
+      + '<li><b>主题</b>：浅色 / 深色 / 跟随系统，三选一。</li>'
+      + '<li><b>界面缩放</b>：85% ~ 160%，整页字号与控件同步放大。</li>'
+      + '<li><b>高对比度</b>：加粗边框、提高文字对比。</li>'
+      + '<li><b>加大触控热区</b>：按钮最小高度提到 44px，减少误触。</li>'
+      + '<li><b>减少动效</b>：关掉淡入与位移动画。</li>'
+      + '<li><b>界面语言</b>：简体中文 / English / 跟随系统。</li>'
+      + '</ul></div>'
+
+      + '<div class="card"><h2>音频焦点与后台</h2>'
+      + '<ul>'
+      + '<li><b>独占音频焦点</b>（默认开）：切到别的 App 时自动暂停，不和它们抢声。</li>'
+      + '<li>想让它在后台继续播（例如配白噪音入睡），把独占焦点<b>关掉</b>即可。</li>'
+      + '<li><b>被其他应用打断时自动暂停</b>：来电或别的播放器出声时暂停本播放器。</li>'
+      + '</ul></div>'
+
+      + '<div class="card"><h2>把音频放进来</h2>'
+      + '<ul>'
+      + '<li><b>添加音频</b>：mp3 / m4a / flac / ogg / wav / aac 等，支持一次多选。</li>'
+      + '<li><b>添加文件夹</b>：整目录导入并自动分组（部分旧安卓不支持目录选择，那就用多选再手动建分组）。</li>'
+      + '<li>导入后音频会<b>复制进 App 自己的存储</b>，原文件删了也能听。不想占空间可在设置里把开关关掉。</li>'
+      + '</ul></div>';
+    },
+    faq: function(){
+      return ''
+      + '<div class="card"><h2>常见问题</h2>'
+      + '<h3>能联网吗？会上传我的东西吗？</h3>'
+      + '<p class="muted">完全不能，也不会。页面没有任何网络请求——不抓封面、不下歌词、不上报统计。所有音频与记录都只存在你本机浏览器的 IndexedDB 里。</p>'
+
+      + '<h3>关掉浏览器、重启手机，歌还在吗？</h3>'
+      + '<p class="muted">在。曲目、分组、队列、听到哪儿都存在本机，只有手动「清除浏览器数据」才会丢。建议偶尔在设置页导出一次清单备份。</p>'
+
+      + '<h3>后台能放吗？</h3>'
+      + '<p class="muted">可以。但默认开了「独占音频焦点」，切到别的 App 会暂停——想让它在后台继续放，去设置里把这一项关掉。把页面「添加到主屏幕」，体验最接近原生 App。</p>'
+
+      + '<h3>一首歌听不见声？</h3>'
+      + '<p class="muted">先看手机媒体音量，再看是否静音或蓝牙没接上。若用了均衡器且把某些频段拉到很低，声音会变小，点「全部归零」恢复。</p>'
+
+      + '<h3>点了播放没反应？</h3>'
+      + '<p class="muted">手机浏览器普遍禁止「未经点击就自动播放」。首次请手动点一次播放键；之后队列内切歌就能自动继续了。</p>'
+
+      + '<h3>为什么导入这么慢 / 占空间？</h3>'
+      + '<p class="muted">为了让你删掉原文件后还能听，导入时会把音频复制一份进浏览器存储，所以占用大约是原文件大小。不想这样就在设置里关掉「复制音频到曲库」——代价是关掉浏览器后就没了。</p>'
+
+      + '<h3>支持哪些格式？</h3>'
+      + '<p class="muted">mp3 / m4a(aac) / wav 基本都能播；flac、ogg/opus 取决于浏览器与手机。同一个文件在不同设备上表现可能不同，这是系统解码能力决定的。</p>'
+
+      + '<h3>能同步到别的手机吗？</h3>'
+      + '<p class="muted">不能自动同步——它就是纯本地的。换设备时用「导出清单 / 导入清单」搬曲目与设置，音频文件需要自己再拷一份过去。</p>'
+      + '</div>';
+    },
+    terms: function(){
+      return ''
+      + '<div class="card"><h2>免责声明</h2>'
+      + '<p class="muted">本软件「闲听 XianTuner」为非官方的个人自制工具，与任何平台、厂商、唱片公司均无关联，也未获得其授权或背书。</p>'
+      + '<p class="muted">所有音频内容均由使用者自行提供与导入。本软件不提供、不存储、不分发、不索引任何音频内容，也不具备任何下载或抓取能力。请仅播放你拥有合法使用权的音频文件。</p>'
+      + '<p class="muted">全部数据（音频、曲目信息、分组、播放记录、各项设置）仅保存在使用者本机浏览器的存储空间中。开发者无法访问、无法获取、也无法恢复这些数据。</p>'
+      + '<p class="muted">本软件按「现状」提供，不作任何明示或暗示的担保。因使用本软件造成的任何数据丢失、设备异常或其他损失，风险均由使用者自行承担。</p>'
+      + '<p class="muted">音频格式的实际解码能力取决于使用者设备上的浏览器，不保证所有格式在所有设备上均可正常播放。</p>'
+      + '<p class="muted">如你不同意上述任何一条，请立即停止使用并清除本页面的本地数据。</p>'
+      + '</div>';
+    },
+    about: function(){
+      return ''
+      + '<div class="card"><h2>关于作者</h2>'
+      + '<div class="author">'
+      + '<div class="av">兰</div>'
+      + '<div><div style="font-weight:600">永远的兰兰</div>'
+      + '<div class="muted">Lanlan Eternal</div></div>'
+      + '</div>'
+      + '<p class="muted">做工具的人。信奉「够用、干净、不添麻烦」——所以这个小播放器不联网、不注册、不放广告、不看你的文件。</p>'
+      + '</div>'
+
+      + '<div class="card"><h2>关于本软件</h2>'
+      + '<div class="kv"><span class="k">名称</span><span class="v">闲听 XianTuner</span></div>'
+      + '<div class="kv"><span class="k">版本</span><span class="v">v' + VER + '</span></div>'
+      + '<div class="kv"><span class="k">形态</span><span class="v">单文件 HTML · 约 ' + (Math.round(_fileSize)) + ' KB</span></div>'
+      + '<div class="kv"><span class="k">依赖</span><span class="v">无任何第三方库 / 无 CDN</span></div>'
+      + '<div class="kv"><span class="k">网络</span><span class="v">零请求，可完全离线</span></div>'
+      + '<div class="kv"><span class="k">平台</span><span class="v">安卓 / iOS / Windows / macOS 浏览器</span></div>'
+      + '<div class="kv"><span class="k">存储</span><span class="v">本机 IndexedDB + localStorage</span></div>'
+      + '</div>'
+
+      + '<div class="card"><h2>功能一览</h2>'
+      + '<ul>'
+      + '<li>文件夹整队播放 · 整夜循环 · 随机播放</li>'
+      + '<li>分组（收藏夹）管理 · 队列可合并 · 队列持久化</li>'
+      + '<li>10 段均衡器 · 低音增强 · 响度补偿 · 9 种预设</li>'
+      + '<li>浅色 / 深色 / 跟随系统主题</li>'
+      + '<li>界面缩放 · 高对比 · 大触控 · 减少动效</li>'
+      + '<li>简体中文 / English 双语界面</li>'
+      + '<li>暂停淡入淡出 · 独占音频焦点 · 断点续播</li>'
+      + '<li>睡眠定时 · 倍速播放 · 快进快退</li>'
+      + '<li>锁屏与通知栏控制 · 清单导出导入备份</li>'
+      + '</ul></div>'
+
+      + '<div class="card"><h2>技术说明</h2>'
+      + '<p class="muted">整个程序是一个 HTML 文件，没有任何外部依赖，可以拷进 U 盘、放进网盘、或丢到任意静态托管上直接打开。</p>'
+      + '<p class="muted">音频以二进制形式存放在浏览器的 IndexedDB 中（曲目元数据与音频数据分开存放，避免更新进度时误伤音频）；界面偏好存在 localStorage。音频播放链路上串了 Web Audio 的 10 个 BiquadFilter 节点，实现图形均衡器与淡入淡出。</p>'
+      + '</div>'
+
+      + '<p class="muted" style="text-align:center;margin:18px 0">© 永远的兰兰（Lanlan Eternal）</p>';
+    }
+  },
+  en: {
+    help: function(){
+      return ''
+      + '<div class="card"><h2>Three steps</h2>'
+      + '<ol>'
+      + '<li><b>Add audio</b> — pick a few files, or tap <b>Add folder</b> to import a whole directory at once (recommended).</li>'
+      + '<li>Each imported folder becomes its own <b>collection</b> automatically — no manual filing.</li>'
+      + '<li>Open the <b>By folder</b> view and tap that collection. <b>Shuffle + repeat all</b> gives you an all-night non-repeating stream.</li>'
+      + '</ol></div>'
+
+      + '<div class="card"><h2>Loop one folder all night (the common case)</h2>'
+      + '<ul>'
+      + '<li>Put audio such as "train sounds" in one phone folder (e.g. <code>Music/train</code>).</li>'
+      + '<li>In Library tap <b>Add folder</b> → select it → everything imports and a collection is created.</li>'
+      + '<li>Switch to <b>By folder</b>, tap the collection → choose <b>Shuffle</b> in the menu.</li>'
+      + '<li>The queue is now every track in that folder. For extra safety, set Loop to <b>Repeat all</b>.</li>'
+      + '<li>Tap <b>Sleep timer</b> and pick 60–120 min — it fades out and pauses on time.</li>'
+      + '</ul>'
+      + '<p class="muted">Note: "Loop off" stops after the last track. For all-night playback keep it on <b>Repeat all</b> or <b>Repeat one</b>.</p>'
+      + '</div>'
+
+      + '<div class="card"><h2>Playback mode saved per collection</h2>'
+      + '<ul>'
+      + '<li>A collection can store its own Loop/Shuffle mode — next time it plays that way directly.</li>'
+      + '<li>The collection menu also lets you add tracks, rename, de-duplicate, or delete (which only ungroups — audio is kept).</li>'
+      + '<li>Manual collections: Library → <b>New collection</b> → name it → tick tracks (select-all supported) → add.</li>'
+      + '</ul></div>'
+
+      + '<div class="card"><h2>Queue (the OPLAYER-style playlist)</h2>'
+      + '<ul>'
+      + '<li>The queue panel on the Player tab is your play order — tap any row to start there.</li>'
+      + '<li><b>Add collection to queue</b> merges several folders into one long queue.</li>'
+      + '<li>The queue is remembered across browser restarts.</li>'
+      + '</ul></div>'
+
+      + '<div class="card"><h2>Long audio & quality</h2>'
+      + '<ul>'
+      + '<li>Playback position is remembered per track (can be turned off in Settings).</li>'
+      + '<li>Switching tracks in the queue always starts from the beginning.</li>'
+      + '<li>Speed 0.8x – 3.0x via the speed chip.</li>'
+      + '<li>Skip ±15s / +30s buttons for podcast intros.</li>'
+      + '<li>Lock-screen and notification controls where Media Session is supported.</li>'
+      + '</ul></div>'
+
+      + '<div class="card"><h2>Equalizer</h2>'
+      + '<ul>'
+      + '<li>Settings → Equalizer → Open. Ten bands from 31Hz to 16kHz, drag each one.</li>'
+      + '<li>Presets: Flat, Pop, Rock, Jazz, Classical, Vocal, Bass boost, Treble boost, Sleep soft.</li>'
+      + '<li>Plus a <b>Bass boost</b> and a <b>Loudness</b> master toggle.</li>'
+      + '<li>Applies instantly and is remembered; "Reset all to flat" returns to neutral.</li>'
+      + '<li class="muted">Needs the browser\'s Web Audio support; a few very old browsers ignore it (playback is unaffected).</li>'
+      + '</ul></div>'
+
+      + '<div class="card"><h2>Appearance & accessibility</h2>'
+      + '<ul>'
+      + '<li><b>Theme</b>: Light / Dark / Follow system.</li>'
+      + '<li><b>UI scale</b>: 85% – 160%, scales text and controls together.</li>'
+      + '<li><b>High contrast</b>: heavier borders, stronger text contrast.</li>'
+      + '<li><b>Larger tap targets</b>: minimum 44px buttons.</li>'
+      + '<li><b>Reduce motion</b>: disables fade and slide animations.</li>'
+      + '<li><b>Language</b>: 简体中文 / English / Follow system.</li>'
+      + '</ul></div>'
+
+      + '<div class="card"><h2>Audio focus & background</h2>'
+      + '<ul>'
+      + '<li><b>Exclusive audio focus</b> (on by default): pauses when you switch away, so it never fights other apps.</li>'
+      + '<li>Want it playing in the background (e.g. white noise while sleeping)? Turn exclusive focus <b>off</b>.</li>'
+      + '<li><b>Pause when interrupted</b>: stops for calls or when another player takes over.</li>'
+      + '</ul></div>'
+
+      + '<div class="card"><h2>Getting audio in</h2>'
+      + '<ul>'
+      + '<li><b>Add audio</b>: mp3 / m4a / flac / ogg / wav / aac, multi-select supported.</li>'
+      + '<li><b>Add folder</b>: imports a directory and auto-groups it. If your browser lacks directory picking, use multi-select and group manually.</li>'
+      + '<li>Imported audio is <b>copied into the app\'s own storage</b>, so it still plays after you delete the original. Turn that off in Settings to save space.</li>'
+      + '</ul></div>';
+    },
+    faq: function(){
+      return ''
+      + '<div class="card"><h2>Frequently asked</h2>'
+      + '<h3>Does it use the network? Does it upload anything?</h3>'
+      + '<p class="muted">No, and no. The page makes no network requests at all — no artwork fetching, no lyrics, no analytics. Audio and records live only in your local browser IndexedDB.</p>'
+
+      + '<h3>Will my music survive closing the browser or rebooting?</h3>'
+      + '<p class="muted">Yes. Tracks, collections, queue and positions are stored locally. Only clearing browser data removes them — export a list backup occasionally from Settings.</p>'
+
+      + '<h3>Can it play in the background?</h3>'
+      + '<p class="muted">Yes, but "Exclusive audio focus" is on by default and pauses when you switch away. Turn it off in Settings to keep playing in the background. Add the page to your home screen for the closest thing to a native app.</p>'
+
+      + '<h3>No sound from a track?</h3>'
+      + '<p class="muted">Check media volume, then mute/Bluetooth. If the equalizer has bands pulled far down, output gets quiet — hit "Reset all to flat".</p>'
+
+      + '<h3>Pressing play does nothing?</h3>'
+      + '<p class="muted">Mobile browsers block autoplay without a tap. Tap play once manually; after that, queue transitions continue automatically.</p>'
+
+      + '<h3>Why is importing slow / why does it take space?</h3>'
+      + '<p class="muted">To keep audio playable after you delete the originals, it is copied into browser storage — roughly the size of the source files. Turn off "Copy audio into library" in Settings if you would rather not; the trade-off is losing them when the browser closes.</p>'
+
+      + '<h3>Which formats work?</h3>'
+      + '<p class="muted">mp3 / m4a(aac) / wav generally play; flac and ogg/opus depend on the browser and phone. Results vary per device because decoding is up to the system.</p>'
+
+      + '<h3>Can I sync to another phone?</h3>'
+      + '<p class="muted">Not automatically — it is purely local. Use "Export list / Import list" to move tracks and settings, and copy the audio files across yourself.</p>'
+      + '</div>';
+    },
+    terms: function(){
+      return ''
+      + '<div class="card"><h2>Disclaimer</h2>'
+      + '<p class="muted">XianTuner is an unofficial, personally made tool. It is not affiliated with, authorised by or endorsed by any platform, vendor or record label.</p>'
+      + '<p class="muted">All audio content is supplied and imported by the user. This software does not provide, store, distribute or index any audio content, and has no downloading or scraping capability. Please only play audio you have the legal right to use.</p>'
+      + '<p class="muted">All data (audio, track info, collections, play history, settings) is stored solely in the user\'s own browser storage. The developer cannot access, obtain or restore it.</p>'
+      + '<p class="muted">This software is provided "as is", without warranty of any kind, express or implied. Any data loss, device issue or other damage arising from its use is the sole responsibility of the user.</p>'
+      + '<p class="muted">Actual audio decoding depends on the browser on your device; not every format is guaranteed to play on every device.</p>'
+      + '<p class="muted">If you disagree with any of the above, please stop using it and clear this page\'s local data.</p>'
+      + '</div>';
+    },
+    about: function(){
+      return ''
+      + '<div class="card"><h2>About the author</h2>'
+      + '<div class="author">'
+      + '<div class="av">兰</div>'
+      + '<div><div style="font-weight:600">Lanlan Eternal</div>'
+      + '<div class="muted">永远的兰兰</div></div>'
+      + '</div>'
+      + '<p class="muted">A maker of small tools who believes in "enough, clean, no fuss" — which is why this player never goes online, never asks you to sign up, shows no ads and never reads your files.</p>'
+      + '</div>'
+
+      + '<div class="card"><h2>About this app</h2>'
+      + '<div class="kv"><span class="k">Name</span><span class="v">XianTuner (闲听)</span></div>'
+      + '<div class="kv"><span class="k">Version</span><span class="v">v' + VER + '</span></div>'
+      + '<div class="kv"><span class="k">Form</span><span class="v">single HTML file · ~' + (Math.round(_fileSize)) + ' KB</span></div>'
+      + '<div class="kv"><span class="k">Dependencies</span><span class="v">none — no libraries, no CDN</span></div>'
+      + '<div class="kv"><span class="k">Network</span><span class="v">zero requests, fully offline</span></div>'
+      + '<div class="kv"><span class="k">Platforms</span><span class="v">Android / iOS / Windows / macOS browsers</span></div>'
+      + '<div class="kv"><span class="k">Storage</span><span class="v">local IndexedDB + localStorage</span></div>'
+      + '</div>'
+
+      + '<div class="card"><h2>Feature list</h2>'
+      + '<ul>'
+      + '<li>Folder-wide queues · all-night loop · shuffle</li>'
+      + '<li>Collections · mergeable & persistent queue</li>'
+      + '<li>10-band EQ · bass boost · loudness · 9 presets</li>'
+      + '<li>Light / dark / follow-system themes</li>'
+      + '<li>UI scaling · high contrast · large tap · reduced motion</li>'
+      + '<li>Simplified Chinese / English UI</li>'
+      + '<li>Fade in/out · exclusive audio focus · resume</li>'
+      + '<li>Sleep timer · playback speed · seek</li>'
+      + '<li>Lock-screen controls · list backup export/import</li>'
+      + '</ul></div>'
+
+      + '<div class="card"><h2>Technical notes</h2>'
+      + '<p class="muted">The whole program is a single HTML file with no external dependencies — copy it to a USB stick, a cloud drive, or any static host and it just runs.</p>'
+      + '<p class="muted">Audio is kept as binary in the browser\'s IndexedDB (track metadata and audio payloads live in separate stores so updating progress can never damage the audio). Preferences live in localStorage. Playback runs through ten Web Audio BiquadFilter nodes, which is what powers the graphic equalizer and the fades.</p>'
+      + '</div>'
+
+      + '<p class="muted" style="text-align:center;margin:18px 0">© Lanlan Eternal (永远的兰兰)</p>';
+    }
+  }
+};
+var curDoc = 'help';
+function renderDoc(which){
+  curDoc = which || curDoc;
+  var box = $('docBody');
+  if(!box) return;
+  var pack = DOCS[LANG] || DOCS.zh;
+  var fn = pack[curDoc] || pack.help;
+  box.innerHTML = fn();
+  var nav = $('docNav');
+  if(nav){
+    Array.prototype.forEach.call(nav.querySelectorAll('button'), function(b){
+      b.classList.toggle('on', b.getAttribute('data-doc') === curDoc);
+    });
+  }
+}
+
+/* ================= 界面文案刷新 ================= */
+function fillLabels(){
+  document.documentElement.lang = (LANG==='en') ? 'en' : 'zh-CN';
+  var setTxt = function(sel, txt){ var el=$(sel); if(el) el.textContent = txt; };
+  var setHTML = function(sel, txt){ var el=$(sel); if(el) el.innerHTML = txt; };
+
+  // 顶栏
+  var h1 = document.querySelector('#top h1');
+  if(h1) h1.innerHTML = esc(L('appName')) + '<small>' + esc(L('appSub')) + '</small>';
+  // 标签栏
+  var tabs = { lib:L('tabLib'), play:L('tabPlay'), more:L('tabMore'), doc:L('tabDoc') };
+  var tb = $('tabs');
+  if(tb){
+    Array.prototype.forEach.call(tb.querySelectorAll('button'), function(b){
+      var k = b.getAttribute('data-v');
+      if(tabs[k]) b.textContent = tabs[k];
+    });
+  }
+  // 曲库
+  setTxt('btnAdd', L('libAdd'));
+  setTxt('btnAddDir', L('libAddDir'));
+  setTxt('btnMakeGroup', L('libNewGroup'));
+  var qel = $('q'); if(qel) qel.placeholder = L('libSearch');
+  var st = $('sort');
+  if(st && st.options && st.options.length >= 4){
+    st.options[0].textContent = L('libSortAdded');
+    st.options[1].textContent = L('libSortPlayed');
+    st.options[2].textContent = L('libSortName');
+    st.options[3].textContent = L('libSortDur');
+  }
+  var mfb = document.querySelector('button[data-mode="files"]');
+  var mfo = document.querySelector('button[data-mode="folder"]');
+  if(mfb) mfb.textContent = L('modeFiles');
+  if(mfo) mfo.textContent = L('modeFolder');
+  var em = $('empty');
+  if(em){
+    var kids = em.children;
+    if(kids && kids.length >= 3){
+      kids[kids.length-2].textContent = L('emptyLib');
+      kids[kids.length-1].textContent = L('emptyLibHint');
+    }
+  }
+  var ge = $('gempty');
+  if(ge){
+    var k2 = ge.children;
+    if(k2 && k2.length >= 3){
+      k2[k2.length-2].textContent = L('emptyGrp');
+      k2[k2.length-1].textContent = L('emptyGrpHint');
+    }
+  }
+  // 播放页
+  var cLoop = $('cLoop'), cShuf = $('cShuffle'), cSleep = $('cSleep'), cReset = $('cReset'), cEq = $('cEq');
+  if(cSleep) cSleep.textContent = L('chipSleep');
+  if(cReset) cReset.textContent = L('chipReset');
+  if(cEq) cEq.textContent = L('chipEq');
+  var qAdd = $('qAddGroup'), qCl = $('qClear');
+  if(qAdd) qAdd.textContent = L('qAddGroup');
+  if(qCl) qCl.textContent = L('qClear');
+  var qh = document.querySelector('#v-play .card h2');
+  if(qh){
+    var qiEl = $('qinfo');
+    var qiTxt = qiEl ? qiEl.textContent : '';
+    qh.textContent = L('qTitle');
+    if(qiTxt){
+      var sp2 = document.createElement('span');
+      sp2.className = 'muted';
+      sp2.id = 'qinfo';
+      sp2.style.fontWeight = '400';
+      sp2.textContent = qiTxt;
+      qh.appendChild(sp2);
+    }
+  }
+  // 设置页
+  var cards = document.querySelectorAll('#v-more .card h2');
+  var heads = [L('setTheme'), L('setLang'), L('setA11y'), L('setPlay'), L('setEq'), L('setFile'), L('setVer')];
+  Array.prototype.forEach.call(cards, function(h, i){ if(heads[i]) h.textContent = heads[i]; });
+  var th = document.querySelectorAll('#segTheme button');
+  if(th.length >= 3){ th[0].textContent = L('thLight'); th[1].textContent = L('thDark'); th[2].textContent = L('thSystem'); }
+  var lg = document.querySelectorAll('#segLang button');
+  if(lg.length >= 3){ lg[0].textContent = '简体中文'; lg[1].textContent = 'English'; lg[2].textContent = L('thSystem'); }
+  var zb = document.querySelector('#zoomReset'); if(zb) zb.textContent = L('zoomReset');
+  var zh0 = document.querySelector('#v-more .zoomrow .muted'); if(zh0) zh0.textContent = L('zoom');
+  var chks = document.querySelectorAll('#v-more label.chk');
+  var optTxt = [
+    [L('optContrast'), L('optContrastD')],
+    [L('optBigTap'), L('optBigTapD')],
+    [L('optMotion'), L('optMotionD')],
+    [L('optKeep'), L('optKeepD')],
+    [L('optResume'), L('optResumeD')],
+    [L('optFade'), L('optFadeD')],
+    [L('optFocus'), L('optFocusD')],
+    [L('optFocusPause'), L('optFocusPauseD')]
+  ];
+  Array.prototype.forEach.call(chks, function(lab, i){
+    var sp = lab.querySelector('span');
+    if(sp && optTxt[i]) sp.innerHTML = esc(optTxt[i][0]) + '<span class="muted" style="display:block">' + esc(optTxt[i][1]) + '</span>';
+  });
+  var eqd = document.querySelector('#v-more .card p.muted');
+  var eqCard = document.querySelector('#btnEqOpen');
+  if(eqCard) eqCard.textContent = L('eqOpen');
+  var eqOff = $('btnEqOff'); if(eqOff) eqOff.textContent = L('eqOff');
+  // 找出均衡器卡片的说明段
+  var allP = document.querySelectorAll('#v-more p.muted');
+  Array.prototype.forEach.call(allP, function(p){
+    if(p.textContent && (p.textContent.indexOf('10 段') >= 0 || p.textContent.indexOf('10-band') >= 0)) p.textContent = L('eqDesc');
+  });
+  var bExp = $('btnExport2'), bImp = $('btnImport'), bDoc = $('btnGotodoc'), bClr = $('btnClear');
+  if(bExp) bExp.textContent = L('btnExport');
+  if(bImp) bImp.textContent = L('btnImport');
+  if(bDoc) bDoc.textContent = L('btnDoc');
+  if(bClr) bClr.textContent = L('btnClear');
+  var kvs = document.querySelectorAll('#v-more .kv');
+  if(kvs.length >= 4){
+    kvs[0].querySelector('.k').textContent = L('kApp');
+    kvs[1].querySelector('.k').textContent = L('kVer');
+    kvs[2].querySelector('.k').textContent = L('kAuthor');
+    kvs[3].querySelector('.k').textContent = L('kMode');
+    kvs[3].querySelector('.v').textContent = L('vMode');
+  }
+  // 文档导航
+  var dn = $('docNav');
+  if(dn){
+    var order = ['help','faq','terms','about'];
+    Array.prototype.forEach.call(dn.querySelectorAll('button'), function(b, i){
+      var k = order[i]; if(k) b.textContent = L('doc' + k.charAt(0).toUpperCase() + k.slice(1));
+    });
+  }
+  // 迷你条
+  var md = document.querySelector('#v-more p.muted');
+  // 海报
+  var eb = $('enterBtn'); if(eb) eb.textContent = L('enter');
+  var sk = $('splashSkip'); if(sk) sk.textContent = L('skip');
+  var sd = document.querySelector('#splash .desc'); if(sd) sd.innerHTML = esc(L('splashDesc'));
+  var sf = document.querySelector('#splash .feats');
+  if(sf){
+    var feat = L('splashFeat');
+    if(Object.prototype.toString.call(feat) === '[object Array]'){
+      sf.innerHTML = feat.map(function(x){ return '<span>' + esc(x) + '</span>'; }).join('');
+    }
+  }
+  renderEqQuick(); syncChips();
+  if(curDoc) renderDoc(curDoc);
+}
+function syncSeg(id, attr, val){
+  var box = $(id);
+  if(!box) return;
+  Array.prototype.forEach.call(box.querySelectorAll('button'), function(b){
+    b.classList.toggle('on', b.getAttribute(attr) === val);
+  });
+}
+function setLang(v){
+  state.lang = v; LS.set('xt_lang', v);
+  LANG = pickLang(v);
+  applyTheme(); fillLabels(); render(); renderGroups(); renderQueue(); renderDoc(curDoc);
+}
+
+/* ================= 载入全部数据 ================= */
+function loadAll(){
+  openDB().then(function(db){
+    state.db = db; state.dbOk = true;
+    return Promise.all([idbGetAll(), idbAllGroups()]);
+  }).then(function(res){
+    state.tracks = (res[0]||[]).map(function(r){ try{ delete r.blob; }catch(e){} return r; });
+    state.tracks.sort(function(a,b){ return (b.addedAt||0)-(a.addedAt||0); });
+    state.groups = res[1]||[];
+    state.groups.sort(function(a,b){ return (b.createdAt||0)-(a.createdAt||0); });
+    var savedQ = LS.get('xt_queue', []);
+    state.queue = savedQ.filter(function(id){ return !!byId(id); });
+    if(!state.queue.length) state.queue = state.tracks.map(function(t){ return t.id; });
+    restoreLast();
+    applySort(); render(); renderGroups(); renderQueue(); renderMini();
+  })["catch"](function(e){
+    state.dbOk = false;
+    state.tracks = LS.get('xt_fallback', []) || [];
+    state.queue = state.tracks.map(function(t){ return t.id; });
+    applySort(); render(); renderGroups(); renderQueue();
+    var m = String((e && e.message) || e);
+    if(m.indexOf('no-idb') < 0) console.log('[XianTuner] storage fallback:', m);
+  });
+}
+
+/* ================= 事件绑定 ================= */
+function bind(){
+  // 海报
+  var sp = $('splash');
+  if(sp){
+    var leave = function(){
+      sp.classList.add('gone');
+      setTimeout(function(){ try{ sp.style.display = 'none'; }catch(e){} }, 600);
+      LS.set('xt_splash', 1);
+    };
+    var eb = $('enterBtn'); if(eb) eb.addEventListener('click', leave);
+    var sk = $('splashSkip'); if(sk) sk.addEventListener('click', leave);
+  }
+  // 顶栏主题快捷键
+  var bt = $('btnTheme');
+  if(bt) bt.addEventListener('click', function(){
+    var order = ['system','dark','light'];
+    var i = order.indexOf(state.theme);
+    setTheme(order[(i+1) % order.length]);
+    toast(LANG==='en' ? ('Theme: ' + state.theme) : ('主题：' + (state.theme==='system'?'跟随系统':state.theme==='dark'?'深色':'浅色')));
+  });
+  // 标签栏
+  var tb = $('tabs');
+  if(tb) tb.addEventListener('click', function(e){
+    var b = e.target.closest ? e.target.closest('button[data-v]') : null;
+    if(b) setView(b.getAttribute('data-v'));
+  });
+  // 曲库
+  var ba = $('btnAdd'); if(ba) ba.addEventListener('click', function(){ $('fp').click(); });
+  var bad = $('btnAddDir'); if(bad) bad.addEventListener('click', function(){ $('fpd').click(); });
+  var fp = $('fp'); if(fp) fp.addEventListener('change', function(){ handleFiles(fp.files, 'files'); fp.value=''; });
+  var fpd = $('fpd'); if(fpd) fpd.addEventListener('change', function(){ handleFiles(fpd.files, 'dir'); fpd.value=''; });
+  var q = $('q'); if(q) q.addEventListener('input', render);
+  var so = $('sort'); if(so) so.addEventListener('change', function(){ applySort(); render(); });
+  var mg = $('btnMakeGroup'); if(mg) mg.addEventListener('click', showMakeGroupSheet);
+  // 视图切换（曲库内的分段控件）
+  var segs = document.querySelectorAll('.seg[role="tablist"]');
+  Array.prototype.forEach.call(segs, function(seg){
+    seg.addEventListener('click', function(e){
+      var b = e.target.closest ? e.target.closest('button') : null;
+      if(!b) return;
+      var mode = b.getAttribute('data-mode');
+      if(mode){ setListMode(mode); return; }
+      var th = b.getAttribute('data-th');
+      if(th){ setTheme(th); return; }
+      var lg2 = b.getAttribute('data-lg');
+      if(lg2){ setLang(lg2); return; }
+    });
+  });
+  // 曲库列表 / 分组 / 队列 委托
+  var main = document.body;
+  main.addEventListener('click', function(e){
+    var el = e.target;
+    if(!el || !el.closest) return;
+    var del = el.closest('[data-del]');
+    if(del){ removeTrack(del.getAttribute('data-del')); return; }
+    var gdel = el.closest('[data-gdel]');
+    if(gdel){ askDeleteGroup(gdel.getAttribute('data-gdel')); return; }
+    var li = el.closest('#list li[data-tid]');
+    if(li && !el.closest('.del')){
+      var id = li.getAttribute('data-tid');
+      var t = byId(id);
+      if(t && t.id === state.curId){ togglePlay(); }
+      else{
+        var idx = state.queue.indexOf(id);
+        if(idx >= 0){ state.qi = idx; playId(id, true); }
+        else{ setQueue([id], 0, {}); }
+      }
+      return;
+    }
+    var gli = el.closest('#groups li[data-gid]');
+    if(gli && !el.closest('[data-gdel]')){
+      showGroupSheet(gli.getAttribute('data-gid'));
+      return;
+    }
+    var qli = el.closest('#queue li[data-qi]');
+    if(qli){
+      var n = parseInt(qli.getAttribute('data-qi'), 10);
+      if(!isNaN(n) && state.queue[n]){ state.qi = n; playId(state.queue[n], true); }
+      return;
+    }
+  });
+  // 播放控制
+  var bp = $('bPlay'); if(bp) bp.addEventListener('click', togglePlay);
+  var bn = $('bNext'); if(bn) bn.addEventListener('click', function(){ nextTrack(false); });
+  var bpr = $('bPrev'); if(bpr) bpr.addEventListener('click', prevTrack);
+  var bb = $('bBack'); if(bb) bb.addEventListener('click', function(){ seekBy(-15); });
+  var bf = $('bFwd'); if(bf) bf.addEventListener('click', function(){ seekBy(30); });
+  var cl = $('cLoop'); if(cl) cl.addEventListener('click', cycleLoop);
+  var cs = $('cShuffle'); if(cs) cs.addEventListener('click', cycleShuffle);
+  var csp = $('cSpeed'); if(csp) csp.addEventListener('click', cycleSpeed);
+  var csl = $('cSleep'); if(csl) csl.addEventListener('click', askSleep);
+  var cr = $('cReset'); if(cr) cr.addEventListener('click', function(){
+    var a = $('audio'); if(a && state.curId){ try{ a.currentTime = 0; }catch(e){} toast(LANG==='en'?'Restarted':'已回到开头'); }
+  });
+  var ceq = $('cEq'); if(ceq) ceq.addEventListener('click', showEqSheet);
+  var qag = $('qAddGroup'); if(qag) qag.addEventListener('click', showAddGroupToQueueSheet);
+  var qcl = $('qClear'); if(qcl) qcl.addEventListener('click', clearQueue);
+  var mp = $('mplay'); if(mp) mp.addEventListener('click', function(e){ e.stopPropagation(); togglePlay(); });
+  var mini = $('mini'); if(mini) mini.addEventListener('click', function(){ setView('play'); });
+  var seek = $('seek');
+  if(seek){
+    seek.addEventListener('input', function(){
+      state.seekDrag = true;
+      var a = $('audio');
+      var tc = $('tcur');
+      if(a && a.duration && tc) tc.textContent = fmt((parseInt(seek.value,10)/1000)*a.duration);
+    });
+    seek.addEventListener('change', function(){
+      var a = $('audio');
+      if(a && a.duration){ try{ a.currentTime = (parseInt(seek.value,10)/1000)*a.duration; }catch(e){} }
+      state.seekDrag = false;
+    });
+  }
+  // 设置页
+  var z = $('zoom'); if(z) z.addEventListener('input', function(){ setZoom(z.value); });
+  var zr = $('zoomReset'); if(zr) zr.addEventListener('click', function(){ setZoom(100); });
+  var oc = $('optContrast');
+  if(oc) oc.addEventListener('change', function(){ state.contrast = oc.checked; LS.set('xt_contrast', oc.checked); applyA11y(); drawEqCurve(); });
+  var obt = $('optBigTap');
+  if(obt) obt.addEventListener('change', function(){ state.bigTap = obt.checked; LS.set('xt_bigtap', obt.checked); applyA11y(); });
+  var orm = $('optReduceMotion');
+  if(orm) orm.addEventListener('change', function(){ state.reduceMotion = orm.checked; LS.set('xt_motion', orm.checked); applyA11y(); });
+  var ok = $('optKeep');
+  if(ok) ok.addEventListener('change', function(){ LS.set('xt_keep', ok.checked); });
+  var orr = $('optResume');
+  if(orr) orr.addEventListener('change', function(){ LS.set('xt_resume', orr.checked); });
+  var of = $('optFade');
+  if(of) of.addEventListener('change', function(){ state.fade = of.checked; LS.set('xt_fade', of.checked); });
+  var ofo = $('optFocus');
+  if(ofo) ofo.addEventListener('change', function(){ state.focus = ofo.checked; LS.set('xt_focus', ofo.checked); });
+  var ofp = $('optFocusPause');
+  if(ofp) ofp.addEventListener('change', function(){ state.focusPause = ofp.checked; LS.set('xt_focuspause', ofp.checked); });
+  var beo = $('btnEqOpen'); if(beo) beo.addEventListener('click', showEqSheet);
+  var beoff = $('btnEqOff');
+  if(beoff) beoff.addEventListener('click', function(){
+    state.eq = defaultEq(); state.eq.on = false;
+    LS.set('xt_eq', state.eq); applyEq(); drawEqCurve(); renderEqQuick();
+    toast(LANG==='en'?'Equalizer reset to flat':'均衡器已归零');
+  });
+  var bex = $('btnExport2'); if(bex) bex.addEventListener('click', exportList);
+  var bim = $('btnImport'); if(bim) bim.addEventListener('click', importList);
+  var bdc = $('btnGotodoc'); if(bdc) bdc.addEventListener('click', function(){ setView('doc'); });
+  var bcr = $('btnClear');
+  if(bcr) bcr.addEventListener('click', function(){
+    if(!confirm(L('confirmClear'))) return;
+    clearLibrary();
+  });
+  var sc = $('shClose'); if(sc) sc.addEventListener('click', closeSheet);
+  var mask = $('mask');
+  if(mask) mask.addEventListener('click', function(e){ if(e.target === mask) closeSheet(); });
+  // 文档导航
+  var dn = $('docNav');
+  if(dn) dn.addEventListener('click', function(e){
+    var b = e.target.closest ? e.target.closest('button[data-doc]') : null;
+    if(b) renderDoc(b.getAttribute('data-doc'));
+  });
+  var tt = $('toTop');
+  if(tt) tt.addEventListener('click', function(){ try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(e){ window.scrollTo(0,0); } });
+  // 弹层内的委托（预设、睡眠、分组勾选等）
+  var sb = $('shBody');
+  if(sb) sb.addEventListener('click', function(e){
+    var el = e.target; if(!el || !el.closest) return;
+    var ep = el.closest('[data-eqp]');
+    if(ep){ setEqPreset(ep.getAttribute('data-eqp')); return; }
+    var sl = el.closest('[data-sleep]');
+    if(sl){ setSleep(parseInt(sl.getAttribute('data-sleep'),10)); return; }
+    var act = el.closest('[data-act]');
+    if(act){ sheetAction(act.getAttribute('data-act'), act); return; }
+    var go = el.closest('#impGo');
+    if(go){ doImport(); return; }
+  });
+  if(sb) sb.addEventListener('input', function(e){
+    var el = e.target; if(!el) return;
+    if(el.getAttribute && el.getAttribute('data-eqband') !== null && el.getAttribute('data-eqband') !== undefined && el.getAttribute('data-eqband') !== ''){
+      var i = parseInt(el.getAttribute('data-eqband'),10);
+      if(!isNaN(i)) setEqBand(i, el.value);
+      var lbl = el.parentNode.querySelector('.val');
+      if(lbl) lbl.textContent = (el.value > 0 ? '+' : '') + el.value;
+    }
+  });
+  if(sb) sb.addEventListener('change', function(e){
+    var el = e.target; if(!el) return;
+    if(el.id === 'eqBass' || el.id === 'eqLoud'){
+      state.eq.on = true;
+      if(el.id === 'eqBass') state.eq.bass = parseFloat(el.value)||0;
+      if(el.id === 'eqLoud') state.eq.loud = !!el.checked;
+      applyEq();
+      var bv = document.querySelector('#eqBassVal');
+      if(bv) bv.textContent = (state.eq.bass>0?'+':'') + state.eq.bass;
+    }
+  });
+  // audio 事件
+  var a = $('audio');
+  if(a){
+    a.addEventListener('timeupdate', function(){
+      savePos(false);
+      updateNow();
+      if(state.curId){ var t = byId(state.curId); if(t){ t.duration = a.duration || t.duration; } }
+    });
+    a.addEventListener('loadedmetadata', function(){
+      var t = byId(state.curId);
+      if(t){ t.duration = a.duration || t.duration; saveMeta(t); }
+      updateNow(); render();
+    });
+    a.addEventListener('ended', function(){
+      if(state.loop === 1){
+        try{ a.currentTime = 0; }catch(e){}
+        a.play();
+        return;
+      }
+      nextTrack(true);
+    });
+    a.addEventListener('play', function(){ playingVisual(true); renderMini(); });
+    a.addEventListener('pause', function(){ playingVisual(false); savePos(true); renderMini(); });
+    a.addEventListener('error', function(){
+      var t = byId(state.curId);
+      if(t) console.log('[XianTuner] audio error on', t.name);
+    });
+  }
+  // 音频焦点：离开页面自动暂停
+  document.addEventListener('visibilitychange', function(){
+    if(!state.focus) return;
+    var a2 = $('audio');
+    if(document.hidden && a2 && !a2.paused){
+      state.pausedByFocus = true;
+      if(state.fade && state.gain && state.audioCtx) fadeTo(0.0001, 0.2, true);
+      else a2.pause();
+      playingVisual(false);
+    }else if(!document.hidden && state.pausedByFocus){
+      state.pausedByFocus = false;
+    }
+  });
+  window.addEventListener('pagehide', function(){ savePos(true); LS.set('xt_queue', state.queue); });
+  window.addEventListener('beforeunload', function(){ savePos(true); });
+  // 系统主题变化
+  try{
+    if(window.matchMedia){
+      mqlDark = window.matchMedia('(prefers-color-scheme: dark)');
+      var onChange = function(){ if(state.theme === 'system') applyTheme(); };
+      if(mqlDark.addEventListener) mqlDark.addEventListener('change', onChange);
+      else if(mqlDark.addListener) mqlDark.addListener(onChange);
+    }
+  }catch(e){}
+  // 键盘（桌面端）
+  document.addEventListener('keydown', function(e){
+    if(e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+    if(e.code === 'Space'){ e.preventDefault(); togglePlay(); }
+    else if(e.code === 'ArrowRight') seekBy(10);
+    else if(e.code === 'ArrowLeft') seekBy(-10);
+    else if(e.code === 'ArrowUp'){ e.preventDefault(); var a3=$('audio'); if(a3) a3.volume = Math.min(1, a3.volume + 0.1); }
+    else if(e.code === 'ArrowDown'){ e.preventDefault(); var a4=$('audio'); if(a4) a4.volume = Math.max(0, a4.volume - 0.1); }
+  });
+}
+
+/* ================= 弹层：均衡器 ================= */
+function showEqSheet(){
+  if(!state.eq) state.eq = defaultEq();
+  var e = state.eq;
+  var html = '<p class="muted">' + esc(L('eqDesc')) + '</p>'
+    + '<canvas id="eqCurve"></canvas>'
+    + '<div class="eqpresets" id="eqQuick2"></div>'
+    + '<div id="eqWrap">';
+  for(var i=0;i<EQ_BANDS.length;i++){
+    var g = e.gains[i] || 0;
+    var hz = EQ_BANDS[i] >= 1000 ? (EQ_BANDS[i]/1000) + 'k' : EQ_BANDS[i];
+    html += '<div class="eqrow"><span class="val">'+(g>0?'+':'')+g+'</span>'
+      + '<input type="range" class="vert" data-eqband="'+i+'" min="-12" max="12" step="1" value="'+g+'" aria-label="'+hz+'Hz">'
+      + '<label>'+hz+'</label></div>';
+  }
+  html += '</div>';
+  html += '<div class="row" style="margin-top:10px;justify-content:space-between">'
+    + '<span class="muted">'+(LANG==='en'?'Bass boost':'低音增强')+'</span>'
+    + '<span class="val" id="eqBassVal" style="color:var(--acc)">'+((e.bass||0)>0?'+':'')+(e.bass||0)+'</span></div>'
+    + '<input type="range" id="eqBass" class="thin" min="-6" max="12" step="1" value="'+(e.bass||0)+'" aria-label="'+(LANG==='en'?'Bass boost':'低音增强')+'">';
+  html += '<label class="chk"><input type="checkbox" id="eqLoud"'+(e.loud?' checked':'')+'><span>'
+    + (LANG==='en'?'Loudness compensation':'响度补偿')
+    + '<span class="muted" style="display:block">'+(LANG==='en'?'Slight overall boost to make quiet material audible':'整体小幅提升，让音量偏小的素材更清楚')+'</span></span></label>';
+  sheet(LANG==='en'?'Equalizer':'均衡器', html);
+  setTimeout(function(){
+    var q2 = $('eqQuick2');
+    if(q2){
+      var h = '';
+      for(var k=0;k<EQ_PRESETS.length;k++){
+        var p = EQ_PRESETS[k];
+        var on = e.on && e.preset === p.id;
+        h += '<button data-eqp="'+p.id+'" class="'+(on?'on':'')+'">'+esc(LANG==='en'?p.en:p.zh)+'</button>';
+      }
+      q2.innerHTML = h;
+    }
+    drawEqCurve();
+  }, 30);
+}
+
+/* ================= 弹层：分组 ================= */
+function showMakeGroupSheet(){
+  var html = '<p class="muted">' + (LANG==='en'
+      ? 'Give the collection a name, then tick the tracks to put in it.'
+      : '给分组起个名字，然后勾选要放进去的曲目。') + '</p>'
+    + '<input type="text" id="mkName" placeholder="' + (LANG==='en'?'e.g. Train sounds':'例如：火车声音') + '">';
+  var opts = '<div class="row" style="margin:10px 0 6px"><button class="btn sm" data-act="pkAll">'
+    + (LANG==='en'?'Select all':'全选') + '</button><button class="btn sm" data-act="pkNone">'
+    + (LANG==='en'?'Clear':'全不选') + '</button></div>';
+  sheet(LANG==='en'?'New collection':'新建分组', html + opts + pickListHtml([])
+    + '<button class="btn primary full" data-act="mkGo" style="margin-top:12px">'
+    + (LANG==='en'?'Create':'创建') + '</button>');
+}
+function pickListHtml(checkedIds){
+  var html = '<div style="max-height:40vh;overflow:auto">';
+  if(!state.tracks.length){
+    html += '<p class="muted">' + (LANG==='en'?'Library is empty':'曲库还是空的') + '</p>';
+  }
+  for(var i=0;i<state.tracks.length;i++){
+    var t2 = state.tracks[i];
+    var on = checkedIds.indexOf(t2.id) >= 0;
+    html += '<label class="chk"><input type="checkbox" data-tid="'+esc(t2.id)+'"'+(on?' checked':'')+'>'
+      + '<span>'+esc(cleanName(t2.name))+'<span class="muted" style="display:block">'+fmt(t2.duration)+'</span></span></label>';
+  }
+  return html + '</div>';
+}
+function pickTracksForGroup(gname){
+  return Array.prototype.slice.call(document.querySelectorAll('#shBody [data-tid]:checked'))
+    .map(function(el){ return el.getAttribute('data-tid'); });
+}
+function showAddGroupToQueueSheet(){
+  var html = '<p class="muted">' + (LANG==='en'
+      ? 'Add a whole collection to the end of the queue.'
+      : '把整个分组追加到队列末尾。') + '</p>';
+  if(!state.groups.length){
+    html += '<p class="muted">' + (LANG==='en'?'No collections yet':'还没有分组') + '</p>';
+  }
+  for(var i=0;i<state.groups.length;i++){
+    var g = state.groups[i];
+    var n = groupTracks(g).length;
+    html += '<button class="btn full" data-goq="'+esc(g.id)+'" style="margin-bottom:6px;justify-content:space-between">'
+      + '<span>'+esc(g.name)+'</span><span class="muted">' + n + ' ' + (LANG==='en'?'tracks':'首') + ' · ' + fmt(groupDur(g)) + '</span></button>';
+  }
+  sheet(LANG==='en'?'Add collection to queue':'把分组加进队列', html);
+}
+function showGroupSheet(gid){
+  var g = byGroup(gid);
+  if(!g || !state.groups.length) return;
+  var list = groupTracks(g);
+  var html = '<div class="row" style="margin-bottom:8px">'
+    + '<button class="btn primary grow" data-act="gPlay" data-gid="'+esc(g.id)+'">'
+    + (LANG==='en'?'Play':'播放') + '</button>'
+    + '<button class="btn grow" data-act="gPlayShuf" data-gid="'+esc(g.id)+'">'
+    + (LANG==='en'?'Shuffle':'随机播放') + '</button></div>'
+    + '<div class="row" style="margin-bottom:10px">'
+    + '<button class="btn grow" data-act="gAddQ" data-gid="'+esc(g.id)+'">'
+    + (LANG==='en'?'Add to queue':'加入队列') + '</button>'
+    + '<button class="btn grow" data-act="gAddTracks" data-gid="'+esc(g.id)+'">'
+    + (LANG==='en'?'Add tracks':'加曲目') + '</button>'
+    + '</div>'
+    + '<div class="row" style="margin-bottom:10px">'
+    + '<button class="btn grow" data-act="gRename" data-gid="'+esc(g.id)+'">'
+    + (LANG==='en'?'Rename':'重命名') + '</button>'
+    + '<button class="btn grow" data-act="gMode" data-gid="'+esc(g.id)+'">'
+    + (LANG==='en'?'Default mode: ':'默认方式：') + (g.mode==='shuffle'?(LANG==='en'?'Shuffle':'随机'):g.mode==='loop'?(LANG==='en'?'Repeat':'循环'):(LANG==='en'?'none':'无')) + '</button>'
+    + '</div>'
+    + '<div class="row" style="margin-bottom:10px">'
+    + '<button class="btn grow" data-act="gRemoveDup" data-gid="'+esc(g.id)+'">'
+    + (LANG==='en'?'De-duplicate':'去重') + '</button>'
+    + '<button class="btn danger grow" data-act="gDel" data-gid="'+esc(g.id)+'">'
+    + (LANG==='en'?'Delete collection':'删除分组') + '</button>'
+    + '</div>'
+    + '<h3>' + (LANG==='en'?'Tracks in this collection':'分组内曲目') + ' (' + list.length + ')</h3>'
+    + '<div style="max-height:34vh;overflow:auto">';
+  for(var i=0;i<list.length;i++){
+    html += '<div class="chk" style="cursor:default"><span>'+esc(cleanName(list[i].name))
+      + '<span class="muted" style="display:block">'+fmt(list[i].duration)+'</span></span>'
+      + '<button class="del" data-trm="'+esc(list[i].id)+'" data-gid="'+esc(g.id)+'">&times;</button></div>';
+  }
+  if(!list.length) html += '<p class="muted">' + (LANG==='en'?'Empty':'空') + '</p>';
+  html += '</div>';
+  sheet(g.name, html);
+}
+function askDeleteGroup(gid){
+  var g = byGroup(gid);
+  if(!g) return;
+  if(!confirm(L('confirmClearGroup'))) return;
+  delGroup(gid);
+  state.groups = state.groups.filter(function(x){ return x.id !== gid; });
+  renderGroups(); closeSheet();
+  toast(LANG==='en'?'Collection deleted':'分组已删除');
+}
+function clearQueue(){
+  state.queue = [];
+  state.qi = 0;
+  LS.set('xt_queue', []);
+  renderQueue(); renderGroups();
+  toast(LANG==='en'?'Queue cleared':'队列已清空');
+}
+function clearLibrary(){
+  state.tracks.slice().forEach(function(t){ delBlob(t.id); });
+  state.tracks = [];
+  state.groups = [];
+  state.queue = [];
+  state.qi = 0;
+  state.curId = null;
+  var a = $('audio');
+  if(a){ try{ a.pause(); }catch(e){} a.removeAttribute('src'); }
+  releaseUrl();
+  playingVisual(false);
+  LS.set('xt_queue', []);
+  LS.set('xt_fallback', []);
+  if(state.dbOk){
+    idb('readwrite', function(st){ st.clear(); }, STORE)["catch"](function(){});
+    idb('readwrite', function(st){ st.clear(); }, STORE_BLOB)["catch"](function(){});
+    idb('readwrite', function(st){ st.clear(); }, STORE_GROUP)["catch"](function(){});
+  }
+  render(); renderGroups(); renderQueue(); updateNow(); renderMini();
+  toast(LANG==='en'?'Library erased':'曲库已清空');
+}
+
+/* ================= 弹层内的动作分发 ================= */
+function sheetAction(act, el){
+  var gid = el.getAttribute('data-gid');
+  var g = gid ? byGroup(gid) : null;
+  if(act === 'pkAll'){ Array.prototype.forEach.call(document.querySelectorAll('#shBody [data-tid]'), function(c){ if(c.type==='checkbox') c.checked = true; }); return; }
+  if(act === 'pkNone'){ Array.prototype.forEach.call(document.querySelectorAll('#shBody [data-tid]'), function(c){ if(c.type==='checkbox') c.checked = false; }); return; }
+  if(act === 'mkGo'){
+    var nameEl = $('mkName');
+    var name = nameEl ? nameEl.value.trim() : '';
+    if(!name){ toast(LANG==='en'?'Please enter a name':'请先起个名字'); return; }
+    var ids = pickTracksForGroup(name);
+    if(!ids.length){ toast(LANG==='en'?'Tick at least one track':'至少勾选一首'); return; }
+    var ex = byGroupExists(name);
+    if(ex){
+      ids.forEach(function(id){ if(ex.trackIds.indexOf(id) < 0) ex.trackIds.push(id); });
+      putGroup(ex);
+    }else{
+      var ng = { id:'g'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
+                 name:name, trackIds:ids, createdAt:Date.now(), mode:'', look:'' };
+      state.groups.unshift(ng); putGroup(ng);
+    }
+    renderGroups(); closeSheet();
+    toast(LANG==='en'?'Collection created':'分组已创建');
+    return;
+  }
+  if(act === 'gPlay' && g){ closeSheet(); setQueue(groupTracks(g).map(function(t){ return t.id; }), 0, {}); return; }
+  if(act === 'gPlayShuf' && g){
+    g.mode = 'shuffle'; putGroup(g);
+    closeSheet();
+    setQueue(groupTracks(g).map(function(t){ return t.id; }), undefined, { shuffle:true, loop:2 });
+    return;
+  }
+  if(act === 'gAddQ' && g){ addGroupToQueue(gid, false); closeSheet(); return; }
+  if(act === 'gAddTracks' && g){ showAddTracksInto(gid); return; }
+  if(act === 'gRename' && g){
+    var nn = prompt(LANG==='en'?'New name:':'新的分组名：', g.name);
+    if(nn && nn.trim()){ g.name = nn.trim(); putGroup(g); renderGroups(); closeSheet(); toast(L('saved')); }
+    return;
+  }
+  if(act === 'gMode' && g){
+    g.mode = g.mode === 'shuffle' ? 'loop' : (g.mode === 'loop' ? '' : 'shuffle');
+    putGroup(g); showGroupSheet(gid);
+    toast(LANG==='en'?'Default mode updated':'默认播放方式已更新');
+    return;
+  }
+  if(act === 'gRemoveDup' && g){
+    var seen = {}, out = [];
+    g.trackIds.forEach(function(id){ if(!seen[id]){ seen[id] = 1; out.push(id); } });
+    var removed = g.trackIds.length - out.length;
+    g.trackIds = out; putGroup(g); renderGroups(); showGroupSheet(gid);
+    toast((LANG==='en'?'Removed ':'去掉了 ') + removed + (LANG==='en'?' duplicate(s)':' 首重复'));
+    return;
+  }
+  if(act === 'gDel' && g){ closeSheet(); askDeleteGroup(gid); return; }
+}
+function showAddTracksInto(gid){
+  var g = byGroup(gid);
+  if(!g) return;
+  var inIds = g.trackIds.slice();
+  sheet(LANG==='en'?'Add tracks':'添加曲目到分组',
+    '<p class="muted">' + (LANG==='en'?'Already-in tracks are pre-ticked.':'已在分组内的会预先勾上。') + '</p>'
+    + pickListHtml(inIds)
+    + '<button class="btn primary full" data-act="gAddGo" data-gid="'+esc(gid)+'" style="margin-top:12px">'
+    + (LANG==='en'?'Save':'保存') + '</button>');
+}
+function gAddGo(gid){
+  var g = byGroup(gid);
+  if(!g) return;
+  g.trackIds = pickTracksForGroup(g.name);
+  putGroup(g); renderGroups(); showGroupSheet(gid);
+  toast(L('saved'));
+}
+
+/* ================= 启动 ================= */
+function boot(){
+  // 读取设置
+  state.theme = LS.get('xt_theme', 'system');
+  state.lang  = LS.get('xt_lang', 'system');
+  state.zoom  = LS.get('xt_zoom', 100);
+  state.contrast = !!LS.get('xt_contrast', false);
+  state.bigTap = !!LS.get('xt_bigtap', false);
+  state.reduceMotion = !!LS.get('xt_motion', false);
+  state.fade = LS.get('xt_fade', true) !== false;
+  state.focus = LS.get('xt_focus', true) !== false;
+  state.focusPause = !!LS.get('xt_focuspause', false);
+  state.eq = loadEq();
+  LANG = pickLang(state.lang);
+
+  // 同步控件初值
+  var z = $('zoom'); if(z) z.value = String(state.zoom);
+  var zv = $('zoomVal'); if(zv) zv.textContent = state.zoom + '%';
+  var oc = $('optContrast'); if(oc) oc.checked = state.contrast;
+  var obt = $('optBigTap'); if(obt) obt.checked = state.bigTap;
+  var orm = $('optReduceMotion'); if(orm) orm.checked = state.reduceMotion;
+  var ok = $('optKeep'); if(ok) ok.checked = LS.get('xt_keep', true) !== false;
+  var orr = $('optResume'); if(orr) orr.checked = LS.get('xt_resume', true) !== false;
+  var of = $('optFade'); if(of) of.checked = state.fade;
+  var ofo = $('optFocus'); if(ofo) ofo.checked = state.focus;
+  var ofp = $('optFocusPause'); if(ofp) ofp.checked = state.focusPause;
+  var vt = $('verTxt'); if(vt) vt.textContent = 'v' + VER;
+
+  state.loop = LS.get('xt_loop', 0) || 0;
+  state.shuffle = !!LS.get('xt_shuffle', false);
+
+  applyTheme(); applyA11y(); fillLabels(); syncChips(); renderEqQuick(); setListMode(LS.get('xt_listmode','files'));
+
+  // 海报：本次会话只显示一次
+  var sp = $('splash');
+  if(sp){
+    if(sessionStorage.getItem('xt_splash_session')){
+      sp.classList.add('gone'); sp.style.display = 'none';
+    }else{
+      try{ sessionStorage.setItem('xt_splash_session','1'); }catch(e){}
+      setTimeout(function(){
+        if(!sp.classList.contains('gone')){ sp.classList.add('gone'); setTimeout(function(){ sp.style.display='none'; }, 600); }
+      }, 4200);
+    }
+  }
+  bind();
+  loadAll();
+  // 元数据读完后重画一次（主题色相关的均衡曲线）
+  setTimeout(drawEqCurve, 200);
+}
+if(document.readyState && document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', boot);
+}else{
+  boot();
+}
+
+/* 供自动化冒烟测试读取内部状态（正常使用不影响） */
+if(typeof window!=='undefined' && window){
+  window.__xt = {
+    state: state,
+    VER: VER,
+    api: {
+      setQueue: function(){ return setQueue.apply(null, arguments); },
+      nextTrack: function(){ return nextTrack.apply(null, arguments); },
+      prevTrack: function(){ return prevTrack.apply(null, arguments); },
+      addGroupToQueue: function(){ return addGroupToQueue.apply(null, arguments); },
+      removeTrack: function(){ return removeTrack.apply(null, arguments); },
+      groupTracks: function(){ return groupTracks.apply(null, arguments); },
+      groupDur: function(){ return groupDur.apply(null, arguments); },
+      folderOf: function(){ return folderOf.apply(null, arguments); },
+      isGroupPlaying: function(){ return isGroupPlaying.apply(null, arguments); },
+      render: function(){ return render.apply(null, arguments); },
+      renderGroups: function(){ return renderGroups.apply(null, arguments); },
+      renderQueue: function(){ return renderQueue.apply(null, arguments); },
+      renderDoc: function(){ return renderDoc.apply(null, arguments); },
+      byId: function(){ return byId.apply(null, arguments); },
+      setTheme: function(){ return setTheme.apply(null, arguments); },
+      setLang: function(){ return setLang.apply(null, arguments); },
+      setZoom: function(){ return setZoom.apply(null, arguments); },
+      setListMode: function(){ return setListMode.apply(null, arguments); },
+      setView: function(){ return setView.apply(null, arguments); },
+      setEqPreset: function(){ return setEqPreset.apply(null, arguments); },
+      setEqBand: function(){ return setEqBand.apply(null, arguments); },
+      getLang: function(){ return LANG; },
+      resolvedTheme: function(){ return resolvedTheme(); },
+      EQ_PRESETS: EQ_PRESETS,
+      DOCS: DOCS
+    }
+  };
+}
+})();
+</script>
+</body>
+</html>
